@@ -155,7 +155,7 @@ public:
         // abort();
         return TransactionResult::ABORT_NORETRY;
       }
-
+      // 从这里开始未添加SDC注入：基于索引查询然后update，所以实际运行的时候，有些有标识的事务并未打印SDC注入信息——Yu
       this->search_local_index(itemTableID, 0, storage.item_keys[i],
                                storage.item_values[i]);
 
