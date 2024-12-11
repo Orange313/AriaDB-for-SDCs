@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <errno.h>
+#define GLOG_USE_GLOG_EXPORT
 #include <glog/logging.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>

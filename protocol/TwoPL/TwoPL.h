@@ -13,6 +13,7 @@
 #include "protocol/TwoPL/TwoPLHelper.h"
 #include "protocol/TwoPL/TwoPLMessage.h"
 #include "protocol/TwoPL/TwoPLTransaction.h"
+#define GLOG_USE_GLOG_EXPORT
 #include <glog/logging.h>
 
 namespace aria {

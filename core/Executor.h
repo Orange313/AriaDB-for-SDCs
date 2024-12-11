@@ -11,6 +11,8 @@
 #include "core/Delay.h"
 #include "core/Partitioner.h"
 #include "core/Worker.h"
+#pragma warning(disable:4996)
+#define GLOG_USE_GLOG_EXPORT
 #include "glog/logging.h"
 
 #include <chrono>

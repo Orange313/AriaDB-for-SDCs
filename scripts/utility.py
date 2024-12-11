@@ -2,7 +2,8 @@
 
 def load_ips(ip_file_path):
     ip_file = open(ip_file_path, 'r')
-    ips = [line.strip().split('\t') for line in ip_file if line.startswith('#') == False]
+    # ips = [line.strip().split('\t') for line in ip_file if line.startswith('#') == False]
+    ips = [line.split('   ') for line in ip_file if line.startswith('#') == False]
     return ips
 
 def get_cmd_string(id, ips, port):

@@ -4,6 +4,8 @@
 
 #pragma once
 
+#pragma warning(disable:4996)
+#define GLOG_USE_GLOG_EXPORT
 #include "glog/logging.h"
 
 #include "benchmark/tpcc/Database.h"
@@ -37,6 +39,11 @@ public:
   virtual ~NewOrder() override = default;
 
   TransactionResult execute(std::size_t worker_id) override {
+    // 各个变量的含义——Yu
+    // W_ID：Warehouse，仓库ID
+    // D_ID：District，地区ID
+    // C_ID：Customer，客户ID
+    
 
     int32_t W_ID = this->partition_id + 1;
 
@@ -49,7 +56,20 @@ public:
     // the warehouse tax rate, is retrieved.
 
     auto warehouseTableID = warehouse::tableID;
-    storage.warehouse_key = warehouse::key(W_ID);
+    // SDC注入：为了不破坏函数接口（search_for_read函数接口都用了const），选择在key上面动手脚——Yu
+    if (this->SDC_To_Injected == true)
+    {
+      int32_t SDC_inject_W_ID = W_ID;
+      storage.warehouse_key = warehouse::key(SDC_inject_W_ID = ((W_ID - 1) >= 0 ? W_ID - 1 : W_ID + 1));
+      printf("========================================\n");
+      printf("SDC_inject in Tid:%zu\n", this->get_id());
+      printf("W_ID:%d-->%d\n", W_ID, SDC_inject_W_ID);
+      printf("========================================\n");
+    }
+    else
+    {
+      storage.warehouse_key = warehouse::key(W_ID);
+    }
     this->search_for_read(warehouseTableID, W_ID - 1, storage.warehouse_key,
                           storage.warehouse_value);
 
@@ -59,7 +79,24 @@ public:
     // one.
 
     auto districtTableID = district::tableID;
-    storage.district_key = district::key(W_ID, D_ID);
+    // SDC注入——Yu
+    if (this->SDC_To_Injected == true)
+    {
+      int32_t SDC_inject_W_ID = W_ID;
+      int32_t SDC_inject_D_ID = D_ID;
+      storage.district_key = district::key(SDC_inject_W_ID = ((W_ID - 1) >= 0 ? W_ID - 1 : W_ID + 1),
+                                         SDC_inject_D_ID = ((D_ID - 1) >= 0 ? D_ID - 1 : D_ID + 1));
+      printf("========================================\n");
+      printf("SDC_inject in Tid:%zu\n", this->get_id());
+      printf("W_ID:%d-->%d\n", W_ID, SDC_inject_W_ID);
+      printf("D_ID:%d-->%d\n", D_ID, SDC_inject_D_ID);
+      printf("========================================\n");
+    }
+    else
+    {
+      storage.district_key = district::key(W_ID, D_ID);
+    }
+
     this->search_for_update(districtTableID, W_ID - 1, storage.district_key,
                             storage.district_value);
 
@@ -69,7 +106,28 @@ public:
     // retrieved.
 
     auto customerTableID = customer::tableID;
-    storage.customer_key = customer::key(W_ID, D_ID, C_ID);
+    
+    // SDC注入——Yu
+    if (this->SDC_To_Injected == true)
+    {
+      int32_t SDC_inject_W_ID = W_ID;
+      int32_t SDC_inject_D_ID = D_ID;
+      int32_t SDC_inject_C_ID = C_ID;
+      storage.customer_key = customer::key(SDC_inject_W_ID = ((W_ID - 1) >= 0 ? W_ID - 1 : W_ID + 1),
+                                         SDC_inject_D_ID = ((D_ID - 1) >= 0 ? D_ID - 1 : D_ID + 1),
+                                          SDC_inject_C_ID = ((C_ID - 1) >= 0 ? C_ID - 1 : C_ID + 1));
+      printf("========================================\n");
+      printf("SDC_inject in Tid:%zu\n", this->get_id());
+      printf("W_ID:%d-->%d\n", W_ID, SDC_inject_W_ID);
+      printf("D_ID:%d-->%d\n", D_ID, SDC_inject_D_ID);
+      printf("C_ID:%d-->%d\n", C_ID, SDC_inject_C_ID);
+      printf("========================================\n");
+    }
+    else
+    {
+      storage.customer_key = customer::key(W_ID, D_ID, C_ID);
+    }
+
     this->search_for_read(customerTableID, W_ID - 1, storage.customer_key,
                           storage.customer_value);
 

@@ -6,6 +6,8 @@
 
 #include <atomic>
 
+#pragma warning(disable:4996)
+#define GLOG_USE_GLOG_EXPORT
 #include "glog/logging.h"
 
 namespace aria {

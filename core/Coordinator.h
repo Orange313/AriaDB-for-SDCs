@@ -13,6 +13,7 @@
 #include "core/Worker.h"
 #include "core/factory/WorkerFactory.h"
 #include <boost/algorithm/string.hpp>
+#define GLOG_USE_GLOG_EXPORT
 #include <glog/logging.h>
 #include <thread>
 #include <vector>

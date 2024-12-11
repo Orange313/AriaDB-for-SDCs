@@ -7,6 +7,7 @@
 #include "common/LockfreeQueue.h"
 #include "common/Message.h"
 #include <atomic>
+#define GLOG_USE_GLOG_EXPORT
 #include <glog/logging.h>
 #include <queue>
 

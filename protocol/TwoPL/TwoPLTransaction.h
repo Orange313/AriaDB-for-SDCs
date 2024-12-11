@@ -11,6 +11,7 @@
 #include "core/Table.h"
 #include "protocol/TwoPL/TwoPLRWKey.h"
 #include <chrono>
+#define GLOG_USE_GLOG_EXPORT
 #include <glog/logging.h>
 #include <vector>
 
@@ -190,6 +191,9 @@ public:
     return writeSet.size() - 1;
   }
 
+  // 添加的函数，获取事务id，此处是为了过编译——Yu
+  std::size_t get_id() const { return id;}
+
 public:
   std::size_t coordinator_id, partition_id;
   std::chrono::steady_clock::time_point startTime;
@@ -198,6 +202,10 @@ public:
   bool abort_lock, abort_read_validation, local_validated, si_in_serializable;
   bool distributed_transaction;
   bool execution_phase;
+
+  // 为了通过编译，加上两个变量——Yu
+  bool SDC_To_Injected;
+  std::size_t id;
 
   // table id, partition id, key, value, local_index_read?, write_lock?,
   // success?, remote?

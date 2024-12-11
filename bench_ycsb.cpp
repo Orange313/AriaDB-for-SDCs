@@ -1,6 +1,7 @@
 #include "benchmark/ycsb/Database.h"
 #include "core/Coordinator.h"
 #include "core/Macros.h"
+#include <gflags/gflags.h> 
 
 DEFINE_int32(read_write_ratio, 80, "read write ratio");
 DEFINE_int32(read_only_ratio, 0, "read only transaction ratio");

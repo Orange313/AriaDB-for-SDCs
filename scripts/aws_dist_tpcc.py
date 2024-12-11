@@ -22,7 +22,7 @@ ips = load_ips('ips.txt')
 
 n_machines = len(ips)
 
-assert n_machines == 8, "we are expecting there are 8 machines."
+assert n_machines == 2, "we are expecting there are 8 machines."
 
 threads = 12
 batch_size = 500

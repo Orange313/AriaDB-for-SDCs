@@ -42,32 +42,32 @@ def print_tpcc():
       print(f'./bench_tpcc --logtostderr=1 --id={machine_id} --servers="{cmd}" --protocol=Aria --partition_num={partition_num} --threads={threads} --batch_size={batch_size} --query={query} --neworder_dist={neworder_dist} --payment_dist={payment_dist}')
 
   # bohm
-  for partition_num in partition_nums:
-    for i in range(REPEAT):
-      cmd = get_cmd_string(machine_id, ips, port + i)
-      print(f'./bench_tpcc --logtostderr=1 --id={machine_id} --servers="{cmd}" --protocol=Bohm --partition_num={partition_num} --threads={threads} --batch_size={batch_size} --query={query} --neworder_dist={neworder_dist} --payment_dist={payment_dist} --mvcc=True --bohm_single_spin=True --same_batch=False')
+  # for partition_num in partition_nums:
+  #   for i in range(REPEAT):
+  #     cmd = get_cmd_string(machine_id, ips, port + i)
+  #     print(f'./bench_tpcc --logtostderr=1 --id={machine_id} --servers="{cmd}" --protocol=Bohm --partition_num={partition_num} --threads={threads} --batch_size={batch_size} --query={query} --neworder_dist={neworder_dist} --payment_dist={payment_dist} --mvcc=True --bohm_single_spin=True --same_batch=False')
 
-  # pwv
-  for partition_num in partition_nums:
-    for i in range(REPEAT):
-      cmd = get_cmd_string(machine_id, ips, port + i)
-      print(f'./bench_tpcc --logtostderr=1 --id={machine_id} --servers="{cmd}" --protocol=Pwv --partition_num={partition_num} --threads={threads} --batch_size={batch_size} --query={query} --neworder_dist={neworder_dist} --payment_dist={payment_dist} --same_batch=False')
+  # # pwv
+  # for partition_num in partition_nums:
+  #   for i in range(REPEAT):
+  #     cmd = get_cmd_string(machine_id, ips, port + i)
+  #     print(f'./bench_tpcc --logtostderr=1 --id={machine_id} --servers="{cmd}" --protocol=Pwv --partition_num={partition_num} --threads={threads} --batch_size={batch_size} --query={query} --neworder_dist={neworder_dist} --payment_dist={payment_dist} --same_batch=False')
 
-  # calvin
-  n_lock_managers = [1, 2, 3, 4, 6]
-  for n_lock_manager in n_lock_managers:
-    for partition_num in partition_nums:
-      for i in range(REPEAT):
-        cmd = get_cmd_string(machine_id, ips, port + i)
-        print(f'./bench_tpcc --logtostderr=1 --id={machine_id} --servers="{cmd}" --protocol=Calvin --partition_num={partition_num} --threads={threads} --batch_size={batch_size} --query={query} --neworder_dist={neworder_dist} --payment_dist={payment_dist} --lock_manager={n_lock_manager} --replica_group=1 --same_batch=False')
+  # # calvin
+  # n_lock_managers = [1, 2, 3, 4, 6]
+  # for n_lock_manager in n_lock_managers:
+  #   for partition_num in partition_nums:
+  #     for i in range(REPEAT):
+  #       cmd = get_cmd_string(machine_id, ips, port + i)
+  #       print(f'./bench_tpcc --logtostderr=1 --id={machine_id} --servers="{cmd}" --protocol=Calvin --partition_num={partition_num} --threads={threads} --batch_size={batch_size} --query={query} --neworder_dist={neworder_dist} --payment_dist={payment_dist} --lock_manager={n_lock_manager} --replica_group=1 --same_batch=False')
 
-  # ariaFB
-  n_lock_managers = [1, 2, 3, 4, 6]
-  for n_lock_manager in n_lock_managers:
-    for partition_num in partition_nums:
-      for i in range(REPEAT):
-        cmd = get_cmd_string(machine_id, ips, port + i)
-        print(f'./bench_tpcc --logtostderr=1 --id={machine_id} --servers="{cmd}" --protocol=AriaFB --partition_num={partition_num} --threads={threads} --batch_size={batch_size} --query={query} --neworder_dist={neworder_dist} --payment_dist={payment_dist} --same_batch=False --ariaFB_lock_manager={n_lock_manager}')
+  # # ariaFB
+  # n_lock_managers = [1, 2, 3, 4, 6]
+  # for n_lock_manager in n_lock_managers:
+  #   for partition_num in partition_nums:
+  #     for i in range(REPEAT):
+  #       cmd = get_cmd_string(machine_id, ips, port + i)
+  #       print(f'./bench_tpcc --logtostderr=1 --id={machine_id} --servers="{cmd}" --protocol=AriaFB --partition_num={partition_num} --threads={threads} --batch_size={batch_size} --query={query} --neworder_dist={neworder_dist} --payment_dist={payment_dist} --same_batch=False --ariaFB_lock_manager={n_lock_manager}')
 
 def main():
   # tpc-c

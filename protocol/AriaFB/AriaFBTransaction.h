@@ -11,6 +11,7 @@
 #include "protocol/AriaFB/AriaFBHelper.h"
 #include "protocol/AriaFB/AriaFBRWKey.h"
 #include <chrono>
+#define GLOG_USE_GLOG_EXPORT
 #include <glog/logging.h>
 #include <thread>
 
@@ -284,8 +285,11 @@ public:
     }
   }
 
+  // 添加的函数，获取事务id，此处是为了过编译——Yu
+  std::size_t get_id() const { return id;}
+
 public:
-  std::size_t coordinator_id, partition_id, id, tid_offset;
+  std::size_t coordinator_id, partition_id, id, tid_offset; // 事务id——Yu
   uint32_t epoch;
   std::chrono::steady_clock::time_point startTime;
   std::size_t pendingResponses;
@@ -298,6 +302,8 @@ public:
   bool relevant, run_in_aria;
   bool execution_phase;
   bool waw, war, raw;
+  // 为了能够通过编译，加上一个bool SDC_To_Injected变量,事务id本身就有了——Yu
+  bool SDC_To_Injected;
 
   std::function<bool(std::size_t)> process_requests;
 

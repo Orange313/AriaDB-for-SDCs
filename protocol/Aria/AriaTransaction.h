@@ -11,6 +11,7 @@
 #include "protocol/Aria/AriaHelper.h"
 #include "protocol/Aria/AriaRWKey.h"
 #include <chrono>
+#define GLOG_USE_GLOG_EXPORT
 #include <glog/logging.h>
 #include <thread>
 
@@ -50,6 +51,11 @@ public:
 
   virtual void reset_query() = 0;
 
+  // 具体的执行函数大致分为如下：
+  // 1. search_local_index(table_id, partition_id, key, value)，索引中查找key对应的value
+  // 2. search_for_read(table_id, partition_id, key, value)，根据key查找value，并将其加入readSet，设置对应的读请求位
+  // 3. search_for_update(table_id, partition_id, key, value)，根据key查找value，并将其加入readSet，设置对应的读请求位
+  // 4. update(table_id, partition_id, key, value)，更新key对应的value，并将其加入writeSet，特别注意到update函数是读写分两步实现的——Yu
   template <class KeyType, class ValueType>
   void search_local_index(std::size_t table_id, std::size_t partition_id,
                           const KeyType &key, ValueType &value) {
@@ -162,6 +168,9 @@ public:
 
   bool is_read_only() { return writeSet.size() == 0; }
 
+  // 添加的函数，获取事务id——Yu
+  std::size_t get_id() const { return id;}
+
 public:
   std::size_t coordinator_id, partition_id, id, tid_offset;
   uint32_t epoch;
@@ -173,6 +182,8 @@ public:
   bool distributed_transaction;
   bool execution_phase;
   bool waw, war, raw;
+
+  bool SDC_To_Injected = false; // 是否执行静默错误的标志位——Yu
 
   // read_key, id, key_offset
   std::function<void(AriaRWKey &, std::size_t, std::size_t)> readRequestHandler;

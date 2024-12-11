@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#define GLOG_USE_GLOG_EXPORT
 #include <glog/logging.h>
 #include <thread>
 #include <unordered_map>

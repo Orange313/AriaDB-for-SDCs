@@ -11,6 +11,7 @@
 #include "core/ControlMessage.h"
 #include "core/Worker.h"
 #include <atomic>
+#define GLOG_USE_GLOG_EXPORT
 #include <glog/logging.h>
 #include <thread>
 #include <vector>

@@ -13,6 +13,8 @@ find_library(jemalloc_lib jemalloc) # jemalloc 5.0
 # get all project files
 file(GLOB_RECURSE ALL_SOURCE_FILES benchmark/*.h common/*.h core/*.h protocol/*.h bench*.cpp)
 
+add_compile_definitions(GLOG_USE_GLOG_EXPORT) # 在这里添加，不需要在每个引用glog头文件的地方添加GLOG_USE_GLOG_EXPORT和报错检查关闭，也可以过编译——Yu
+
 add_custom_target(
         format
         COMMAND clang-format
@@ -23,6 +25,8 @@ add_custom_target(
 )
 
 include_directories(${CMAKE_SOURCE_DIR})
+
+include_directories(${CMAKE_SOURCE_DIR}/SDCs_injection)
 
 file(GLOB_RECURSE COMMON_SOURCE_FILES common/*.cpp)
 add_library(common STATIC ${COMMON_SOURCE_FILES})

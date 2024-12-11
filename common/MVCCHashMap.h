@@ -6,6 +6,7 @@
 
 #include "SpinLock.h"
 #include <atomic>
+#define GLOG_USE_GLOG_EXPORT
 #include <glog/logging.h>
 #include <list>
 #include <unordered_map>

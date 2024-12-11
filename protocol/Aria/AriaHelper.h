@@ -10,6 +10,8 @@
 
 #include "core/Table.h"
 
+#pragma warning(disable:4996)
+#define GLOG_USE_GLOG_EXPORT
 #include "glog/logging.h"
 #include "protocol/Aria/AriaRWKey.h"
 

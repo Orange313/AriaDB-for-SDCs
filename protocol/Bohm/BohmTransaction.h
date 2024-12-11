@@ -11,6 +11,7 @@
 #include "protocol/Bohm/BohmHelper.h"
 #include "protocol/Bohm/BohmRWKey.h"
 #include <chrono>
+#define GLOG_USE_GLOG_EXPORT
 #include <glog/logging.h>
 #include <thread>
 
@@ -221,9 +222,11 @@ public:
   }
 
   bool is_read_only() { return writeSet.size() == 0; }
-
+  // 添加的函数，获取事务id，此处是为了过编译——Yu
+  std::size_t get_id() const { return id;}
+  
 public:
-  std::size_t coordinator_id, partition_id, id, tid_offset;
+  std::size_t coordinator_id, partition_id, id, tid_offset; // 同样，事务id已经有了
   uint32_t epoch;
   std::chrono::steady_clock::time_point startTime;
   std::size_t pendingResponses;
@@ -234,6 +237,9 @@ public:
   bool abort_read_not_ready, abort_no_retry;
   bool distributed_transaction;
   bool execution_phase;
+
+  // 为了通过编译，加上一个bool SDC_To_Injected变量——Yu
+  bool SDC_To_Injected;
 
   std::function<bool(std::size_t)> process_requests;
 

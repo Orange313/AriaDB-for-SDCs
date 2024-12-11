@@ -10,6 +10,7 @@
 #include "protocol/Calvin/CalvinPartitioner.h"
 #include "protocol/Calvin/CalvinRWKey.h"
 #include <chrono>
+#define GLOG_USE_GLOG_EXPORT
 #include <glog/logging.h>
 #include <thread>
 
@@ -250,8 +251,11 @@ public:
     }
   }
 
+  // 添加的函数，获取事务id，此处是为了过编译——Yu
+  std::size_t get_id() const { return id;}
+
 public:
-  std::size_t coordinator_id, partition_id, id;
+  std::size_t coordinator_id, partition_id, id; // 事务id已经有了——Yu
   std::chrono::steady_clock::time_point startTime;
   std::atomic<int32_t> network_size;
   std::atomic<int32_t> local_read, remote_read;
@@ -260,6 +264,10 @@ public:
   bool abort_no_retry;
   bool distributed_transaction;
   bool execution_phase;
+
+  // 为了通过编译，加上一个bool SDC_To_Injected变量——Yu
+  bool SDC_To_Injected;
+  
 
   std::function<bool(std::size_t)> process_requests;
 

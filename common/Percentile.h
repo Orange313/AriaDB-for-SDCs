@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cmath>
 #include <fstream>
+#define GLOG_USE_GLOG_EXPORT
 #include <glog/logging.h>
 
 // The nearest-rank method
