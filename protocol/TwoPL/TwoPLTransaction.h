@@ -203,8 +203,7 @@ public:
   bool distributed_transaction;
   bool execution_phase;
 
-  // 为了通过编译，加上两个变量——Yu
-  bool SDC_To_Injected;
+  // 为了通过编译，加上1个变量——Yu
   std::size_t id;
 
   // table id, partition id, key, value, local_index_read?, write_lock?,

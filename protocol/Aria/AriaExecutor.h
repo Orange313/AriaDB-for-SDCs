@@ -160,18 +160,6 @@ public:
       transactions[i]->set_epoch(cur_epoch);
       transactions[i]->set_id(i * context.coordinator_num + coordinator_id +
                               1); // tid starts from 1，Aria协议在这里分配tid
-      // start 随机产生SDC注入——Yu
-      transactions[i]->SDC_To_Injected = sdc_generator();
-      if(transactions[i]->SDC_To_Injected == true){
-        std::string message = "========================================\n";
-        message.append("Injected SDC Flag in Transaction ");
-        message.append(std::to_string(transactions[i]->get_id()));
-        message.append("\n");
-        message.append("========================================\n");
-        // 打印
-        printf("%s\n", message.c_str());
-      }
-      // end 随机产生SDC注入——Yu
       transactions[i]->set_tid_offset(i);
       transactions[i]->execution_phase = false;
       setupHandlers(*transactions[i]);

@@ -183,7 +183,6 @@ public:
   bool execution_phase;
   bool waw, war, raw;
 
-  bool SDC_To_Injected = false; // 是否执行静默错误的标志位——Yu
 
   // read_key, id, key_offset
   std::function<void(AriaRWKey &, std::size_t, std::size_t)> readRequestHandler;

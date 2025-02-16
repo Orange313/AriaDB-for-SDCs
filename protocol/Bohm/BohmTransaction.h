@@ -238,8 +238,6 @@ public:
   bool distributed_transaction;
   bool execution_phase;
 
-  // 为了通过编译，加上一个bool SDC_To_Injected变量——Yu
-  bool SDC_To_Injected;
 
   std::function<bool(std::size_t)> process_requests;
 
