@@ -323,17 +323,17 @@ public:
     float H_AMOUNT = query.H_AMOUNT;
     // 检查当前查询是否含有SDC注入——Yu
     if(this->query.SDC_To_Injected == true){
-      std::string message = "========================================\n";
-      message.append("Injected SDC Flag in Transaction ");
-      message.append(std::to_string(this->get_id()));
-      message.append("\nOriginal D_ID:");
-      message.append(std::to_string(this->query.SDC_original_D_ID));
-      message.append("\nInjected D_ID:");
-      message.append(std::to_string(this->query.D_ID));
-      message.append("\n");
-      message.append("========================================\n");
+      std::string SDC_Message = "========================================\n";
+      SDC_Message.append("Injected SDC Flag in Transaction ");
+      SDC_Message.append(std::to_string(this->get_id()));
+      SDC_Message.append("\nOriginal D_ID:");
+      SDC_Message.append(std::to_string(this->query.SDC_original_D_ID));
+      SDC_Message.append("\nInjected D_ID:");
+      SDC_Message.append(std::to_string(this->query.D_ID));
+      SDC_Message.append("\n");
+      SDC_Message.append("========================================\n");
       // 打印
-      printf("%s\n", message.c_str());
+      printf("%s\n", SDC_Message.c_str());
     }
 
     auto warehouseTableID = warehouse::tableID;
