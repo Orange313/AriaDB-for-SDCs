@@ -26,6 +26,28 @@ namespace tpcc {
  */
 
 
+enum class SDC_Choice {
+  DEFAULT = 0,
+  D_ID,
+  C_ID,
+  C_D_ID,
+  C_W_ID
+};
+
+std::string SDC_choice_to_string(SDC_Choice choice) {
+  switch (choice) {
+      case SDC_Choice::D_ID:
+          return "D_ID";
+      case SDC_Choice::C_ID:
+          return "C_ID";
+      case SDC_Choice::C_D_ID:
+          return "C_D_ID";
+      case SDC_Choice::C_W_ID:
+          return "C_W_ID";
+      default:
+          return "Error!";
+  }
+}
 
 struct NewOrderQuery {
   bool isRemote() const {
@@ -43,9 +65,10 @@ struct NewOrderQuery {
   int8_t O_OL_CNT;
 
   // 静默错误注入标志位和原始值
-  // 这里选择D_ID作为注入对象——Yu
+  // 这里选择D_ID和C_ID其中的一个作为注入对象——Yu
   bool SDC_To_Injected = false; 
-  int32_t SDC_original_D_ID;
+  int32_t SDC_original;
+  SDC_Choice SDC_record;
 
   struct NewOrderQueryInfo {
     int32_t OL_I_ID;  // [8191-100000]之间，且不重复——Yu
@@ -68,27 +91,43 @@ public:
     // The district number (D_ID) is randomly selected within [1 ..
     // context.n_district] from the home warehouse (D_W_ID = W_ID).
     query.D_ID = random.uniform_dist(1, context.n_district);
-    if(sdc_generator()){
-      query.SDC_To_Injected = true;
-      query.SDC_original_D_ID = query.D_ID;
-      // 这里还是先限制范围来模拟比特翻转，主要还是考虑到bit_flip的操作可能会超出范围，进而引起很多麻烦的问题。
-      // 需要保证和原来的不同。——Yu
-      bool filp_bit_retry;
-      do{
-        filp_bit_retry = false;
-        query.D_ID = random.uniform_dist(1, context.n_district);
-        if(query.D_ID == query.SDC_original_D_ID)
-          filp_bit_retry = true;
-      }while(filp_bit_retry);
-    } else {
-      query.SDC_To_Injected = false;
-    }
 
     // The non-uniform random customer number (C_ID) is selected using the
     // NURand(1023,1,3000) function from the selected district number (C_D_ID =
     // D_ID) and the home warehouse number (C_W_ID = W_ID).
 
     query.C_ID = random.non_uniform_distribution(1023, 1, 3000);
+
+    if(sdc_generator()){
+      query.SDC_To_Injected = true;
+      if(random_choice(2) == 1){
+        query.SDC_record = SDC_Choice::D_ID;
+        query.SDC_original = query.D_ID;
+      // 这里还是先限制范围来模拟比特翻转，主要还是考虑到bit_flip的操作可能会超出范围，进而引起很多麻烦的问题。
+      // 需要保证和原来的不同。——Yu
+      bool filp_bit_retry;
+      do{
+        filp_bit_retry = false;
+        query.D_ID = random.uniform_dist(1, context.n_district);
+        if(query.D_ID == query.SDC_original)
+          filp_bit_retry = true;
+      }while(filp_bit_retry);
+      } else{
+        query.SDC_record = SDC_Choice::C_ID;
+        query.SDC_original = query.C_ID;
+      // 这里还是先限制范围来模拟比特翻转，主要还是考虑到bit_flip的操作可能会超出范围，进而引起很多麻烦的问题。
+      // 需要保证和原来的不同。——Yu
+      bool filp_bit_retry;
+      do{
+        filp_bit_retry = false;
+        query.C_ID = random.non_uniform_distribution(1023, 1, 3000);
+        if(query.C_ID == query.SDC_original)
+          filp_bit_retry = true;
+      }while(filp_bit_retry);
+      }
+    } else {
+      query.SDC_To_Injected = false;
+    }
 
     // The number of items in the order (ol_cnt) is randomly selected within [5
     // .. 15] (an average of 10).
@@ -158,9 +197,10 @@ struct PaymentQuery {
   int32_t C_D_ID;
   int32_t C_W_ID;
   float H_AMOUNT;
-  // 静默错误注入标志位——Yu
+  // 静默错误注入标志位和原始值记录——Yu
   bool SDC_To_Injected = false; 
-  int32_t SDC_original_D_ID;
+  int32_t SDC_original;
+  SDC_Choice SDC_record;
 };
 
 class makePaymentQuery {
@@ -177,17 +217,18 @@ public:
     // ..context.n_district] from the home warehouse (D_W_ID) = W_ID).
 
     query.D_ID = random.uniform_dist(1, context.n_district);
-    // 为了代码好运行起来，这里也选择对D_ID进行静默错误注入——Yu
+    // 这里的注入会比较复杂，所以先选择对D_ID进行静默错误注入，后面有需求了再添加也不迟——Yu
     if(sdc_generator()){
+      query.SDC_record = SDC_Choice::D_ID;
       query.SDC_To_Injected = true;
-      query.SDC_original_D_ID = query.D_ID;
+      query.SDC_original = query.D_ID;
       // 这里还是先限制范围来模拟比特翻转，主要还是考虑到bit_flip的操作可能会超出范围，进而引起很多麻烦的问题。
       // 需要保证和原来的不同
       bool filp_bit_retry;
       do{
         filp_bit_retry = false;
         query.D_ID = random.uniform_dist(1, context.n_district);
-        if(query.D_ID == query.SDC_original_D_ID)
+        if(query.D_ID == query.SDC_original)
           filp_bit_retry = true;
       }while(filp_bit_retry);
     } else {

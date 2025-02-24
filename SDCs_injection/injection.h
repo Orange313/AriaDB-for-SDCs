@@ -28,4 +28,6 @@ KeyType flip_bit(KeyType &key) {
     return corruptedKey;
 }
 
+
+
 #endif

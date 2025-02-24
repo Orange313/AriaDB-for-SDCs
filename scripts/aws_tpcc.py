@@ -35,13 +35,13 @@ def print_tpcc():
   payment_dist = 15
   partition_nums = [1, 2, 4, 6, 8, 10, 12, 36, 60, 84, 108, 132, 156, 180]
 
-  # aria
-  for partition_num in partition_nums:
-    for i in range(REPEAT):
-      cmd = get_cmd_string(machine_id, ips, port + i)
-      print(f'./bench_tpcc --logtostderr=1 --id={machine_id} --servers="{cmd}" --protocol=Aria --partition_num={partition_num} --threads={threads} --batch_size={batch_size} --query={query} --neworder_dist={neworder_dist} --payment_dist={payment_dist}')
+  # # aria
+  # for partition_num in partition_nums:
+  #   for i in range(REPEAT):
+  #     cmd = get_cmd_string(machine_id, ips, port + i)
+  #     print(f'./bench_tpcc --logtostderr=1 --id={machine_id} --servers="{cmd}" --protocol=Aria --partition_num={partition_num} --threads={threads} --batch_size={batch_size} --query={query} --neworder_dist={neworder_dist} --payment_dist={payment_dist}')
 
-  # bohm
+  # # bohm
   # for partition_num in partition_nums:
   #   for i in range(REPEAT):
   #     cmd = get_cmd_string(machine_id, ips, port + i)
@@ -61,13 +61,13 @@ def print_tpcc():
   #       cmd = get_cmd_string(machine_id, ips, port + i)
   #       print(f'./bench_tpcc --logtostderr=1 --id={machine_id} --servers="{cmd}" --protocol=Calvin --partition_num={partition_num} --threads={threads} --batch_size={batch_size} --query={query} --neworder_dist={neworder_dist} --payment_dist={payment_dist} --lock_manager={n_lock_manager} --replica_group=1 --same_batch=False')
 
-  # # ariaFB
-  # n_lock_managers = [1, 2, 3, 4, 6]
-  # for n_lock_manager in n_lock_managers:
-  #   for partition_num in partition_nums:
-  #     for i in range(REPEAT):
-  #       cmd = get_cmd_string(machine_id, ips, port + i)
-  #       print(f'./bench_tpcc --logtostderr=1 --id={machine_id} --servers="{cmd}" --protocol=AriaFB --partition_num={partition_num} --threads={threads} --batch_size={batch_size} --query={query} --neworder_dist={neworder_dist} --payment_dist={payment_dist} --same_batch=False --ariaFB_lock_manager={n_lock_manager}')
+  # ariaFB
+  n_lock_managers = [1, 2, 3, 4, 6]
+  for n_lock_manager in n_lock_managers:
+    for partition_num in partition_nums:
+      for i in range(REPEAT):
+        cmd = get_cmd_string(machine_id, ips, port + i)
+        print(f'./bench_tpcc --logtostderr=1 --id={machine_id} --servers="{cmd}" --protocol=AriaFB --partition_num={partition_num} --threads={threads} --batch_size={batch_size} --query={query} --neworder_dist={neworder_dist} --payment_dist={payment_dist} --same_batch=False --ariaFB_lock_manager={n_lock_manager}')
 
 def main():
   # tpc-c
