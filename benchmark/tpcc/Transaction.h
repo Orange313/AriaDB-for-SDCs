@@ -55,7 +55,7 @@ public:
       SDC_Message.append("\nInjected ");
       SDC_Message.append(SDC_choice_to_string(query.SDC_record));
       SDC_Message.append(":");
-      SDC_Message.append(std::to_string(this->query.D_ID));
+      SDC_Message.append(std::to_string(sdc_get_value_neworder(this->query)));
       SDC_Message.append("\n");
       SDC_Message.append("========================================\n");
       // 打印
@@ -294,7 +294,7 @@ private:
   Storage &storage;
   std::size_t partition_id;
   NewOrderQuery query;
-  // bool SDC_To_Injected = false; // 是否执行静默错误的标志位——Yu
+  // bool SDC_To_Injected = false; // 是否执行静默错误的标志位（老版本，已经弃用）——Yu
 };
 
 template <class Transaction> class Payment : public Transaction {
@@ -337,7 +337,7 @@ public:
       SDC_Message.append("\nInjected ");
       SDC_Message.append(SDC_choice_to_string(query.SDC_record));
       SDC_Message.append(":");
-      SDC_Message.append(std::to_string(this->query.D_ID));
+      SDC_Message.append(std::to_string(sdc_get_value_payment(this->query)));
       SDC_Message.append("\n");
       SDC_Message.append("========================================\n");
       // 打印
@@ -492,7 +492,7 @@ private:
   Storage &storage;
   std::size_t partition_id;
   PaymentQuery query;
-  // bool SDC_To_Injected = false; // 是否执行静默错误的标志位——Yu
+  // bool SDC_To_Injected = false; // 是否执行静默错误的标志位（老版本，已经弃用）——Yu
 
 };
 

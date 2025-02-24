@@ -12,7 +12,7 @@ bool sdc_generator(){
     return dis(gen) < prob_sdc;
 }
 
-int random_choice(int n) {
+int sdc_random_choice(int n) {
     static std::random_device rd;
     static std::mt19937 gen(rd());
     std::uniform_int_distribution<int> dist(1, n);
