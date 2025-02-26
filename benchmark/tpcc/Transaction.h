@@ -45,7 +45,7 @@ public:
     // C_ID：Customer，客户ID
     
     if(this->query.SDC_To_Injected == true){
-      std::string SDC_Message = "========================================\n";
+      std::string SDC_Message = "\n========================================\n";
       SDC_Message.append("Injected SDC Flag in Transaction ");
       SDC_Message.append(std::to_string(this->get_id()));
       SDC_Message.append("\nOriginal ");
@@ -59,7 +59,8 @@ public:
       SDC_Message.append("\n");
       SDC_Message.append("========================================\n");
       // 打印
-      printf("%s\n", SDC_Message.c_str());
+      // printf("%s\n", SDC_Message.c_str());
+      LOG(INFO) << SDC_Message;
     }
     int32_t W_ID = this->partition_id + 1;
 
@@ -327,7 +328,7 @@ public:
     float H_AMOUNT = query.H_AMOUNT;
     // 检查当前查询是否含有SDC注入——Yu
     if(this->query.SDC_To_Injected == true){
-      std::string SDC_Message = "========================================\n";
+      std::string SDC_Message = "\n========================================\n";
       SDC_Message.append("Injected SDC Flag in Transaction ");
       SDC_Message.append(std::to_string(this->get_id()));
       SDC_Message.append("\nOriginal ");
@@ -341,7 +342,8 @@ public:
       SDC_Message.append("\n");
       SDC_Message.append("========================================\n");
       // 打印
-      printf("%s\n", SDC_Message.c_str());
+      // printf("%s\n", SDC_Message.c_str());
+      LOG(INFO) << SDC_Message;
     }
 
     auto warehouseTableID = warehouse::tableID;
