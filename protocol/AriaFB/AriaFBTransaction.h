@@ -302,8 +302,6 @@ public:
   bool relevant, run_in_aria;
   bool execution_phase;
   bool waw, war, raw;
-  // 为了能够通过编译，加上一个bool SDC_To_Injected变量,事务id本身就有了——Yu
-  bool SDC_To_Injected;
 
   std::function<bool(std::size_t)> process_requests;
 

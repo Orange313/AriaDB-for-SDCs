@@ -44,7 +44,24 @@ public:
     // D_ID：District，地区ID
     // C_ID：Customer，客户ID
     
-
+    if(this->query.SDC_To_Injected == true){
+      std::string SDC_Message = "\n========================================\n";
+      SDC_Message.append("Injected SDC Flag in Transaction ");
+      SDC_Message.append(std::to_string(this->get_id()));
+      SDC_Message.append("\nOriginal ");
+      SDC_Message.append(SDC_choice_to_string(query.SDC_record));
+      SDC_Message.append(":");
+      SDC_Message.append(std::to_string(this->query.SDC_original));
+      SDC_Message.append("\nInjected ");
+      SDC_Message.append(SDC_choice_to_string(query.SDC_record));
+      SDC_Message.append(":");
+      SDC_Message.append(std::to_string(sdc_get_value_neworder(this->query)));
+      SDC_Message.append("\n");
+      SDC_Message.append("========================================\n");
+      // 打印
+      // printf("%s\n", SDC_Message.c_str());
+      LOG(INFO) << SDC_Message;
+    }
     int32_t W_ID = this->partition_id + 1;
 
     // The input data (see Clause 2.4.3.2) are communicated to the SUT.
@@ -56,20 +73,8 @@ public:
     // the warehouse tax rate, is retrieved.
 
     auto warehouseTableID = warehouse::tableID;
-    // SDC注入：为了不破坏函数接口（search_for_read函数接口都用了const），选择在key上面动手脚——Yu
-    if (this->SDC_To_Injected == true)
-    {
-      int32_t SDC_inject_W_ID = W_ID;
-      storage.warehouse_key = warehouse::key(SDC_inject_W_ID = ((W_ID - 1) >= 0 ? W_ID - 1 : W_ID + 1));
-      printf("========================================\n");
-      printf("SDC_inject in Tid:%zu\n", this->get_id());
-      printf("W_ID:%d-->%d\n", W_ID, SDC_inject_W_ID);
-      printf("========================================\n");
-    }
-    else
-    {
-      storage.warehouse_key = warehouse::key(W_ID);
-    }
+    storage.warehouse_key = warehouse::key(W_ID);
+    
     this->search_for_read(warehouseTableID, W_ID - 1, storage.warehouse_key,
                           storage.warehouse_value);
 
@@ -79,23 +84,7 @@ public:
     // one.
 
     auto districtTableID = district::tableID;
-    // SDC注入——Yu
-    if (this->SDC_To_Injected == true)
-    {
-      int32_t SDC_inject_W_ID = W_ID;
-      int32_t SDC_inject_D_ID = D_ID;
-      storage.district_key = district::key(SDC_inject_W_ID = ((W_ID - 1) >= 0 ? W_ID - 1 : W_ID + 1),
-                                         SDC_inject_D_ID = ((D_ID - 1) >= 0 ? D_ID - 1 : D_ID + 1));
-      printf("========================================\n");
-      printf("SDC_inject in Tid:%zu\n", this->get_id());
-      printf("W_ID:%d-->%d\n", W_ID, SDC_inject_W_ID);
-      printf("D_ID:%d-->%d\n", D_ID, SDC_inject_D_ID);
-      printf("========================================\n");
-    }
-    else
-    {
-      storage.district_key = district::key(W_ID, D_ID);
-    }
+    storage.district_key = district::key(W_ID, D_ID);
 
     this->search_for_update(districtTableID, W_ID - 1, storage.district_key,
                             storage.district_value);
@@ -107,26 +96,7 @@ public:
 
     auto customerTableID = customer::tableID;
     
-    // SDC注入——Yu
-    if (this->SDC_To_Injected == true)
-    {
-      int32_t SDC_inject_W_ID = W_ID;
-      int32_t SDC_inject_D_ID = D_ID;
-      int32_t SDC_inject_C_ID = C_ID;
-      storage.customer_key = customer::key(SDC_inject_W_ID = ((W_ID - 1) >= 0 ? W_ID - 1 : W_ID + 1),
-                                         SDC_inject_D_ID = ((D_ID - 1) >= 0 ? D_ID - 1 : D_ID + 1),
-                                          SDC_inject_C_ID = ((C_ID - 1) >= 0 ? C_ID - 1 : C_ID + 1));
-      printf("========================================\n");
-      printf("SDC_inject in Tid:%zu\n", this->get_id());
-      printf("W_ID:%d-->%d\n", W_ID, SDC_inject_W_ID);
-      printf("D_ID:%d-->%d\n", D_ID, SDC_inject_D_ID);
-      printf("C_ID:%d-->%d\n", C_ID, SDC_inject_C_ID);
-      printf("========================================\n");
-    }
-    else
-    {
-      storage.customer_key = customer::key(W_ID, D_ID, C_ID);
-    }
+    storage.customer_key = customer::key(W_ID, D_ID, C_ID);
 
     this->search_for_read(customerTableID, W_ID - 1, storage.customer_key,
                           storage.customer_value);
@@ -155,7 +125,6 @@ public:
         // abort();
         return TransactionResult::ABORT_NORETRY;
       }
-      // 从这里开始未添加SDC注入：基于索引查询然后update，所以实际运行的时候，有些有标识的事务并未打印SDC注入信息——Yu
       this->search_local_index(itemTableID, 0, storage.item_keys[i],
                                storage.item_values[i]);
 
@@ -326,6 +295,7 @@ private:
   Storage &storage;
   std::size_t partition_id;
   NewOrderQuery query;
+  // bool SDC_To_Injected = false; // 是否执行静默错误的标志位（老版本，已经弃用）——Yu
 };
 
 template <class Transaction> class Payment : public Transaction {
@@ -356,6 +326,25 @@ public:
     int32_t C_D_ID = query.C_D_ID;
     int32_t C_W_ID = query.C_W_ID;
     float H_AMOUNT = query.H_AMOUNT;
+    // 检查当前查询是否含有SDC注入——Yu
+    if(this->query.SDC_To_Injected == true){
+      std::string SDC_Message = "\n========================================\n";
+      SDC_Message.append("Injected SDC Flag in Transaction ");
+      SDC_Message.append(std::to_string(this->get_id()));
+      SDC_Message.append("\nOriginal ");
+      SDC_Message.append(SDC_choice_to_string(query.SDC_record));
+      SDC_Message.append(":");
+      SDC_Message.append(std::to_string(this->query.SDC_original));
+      SDC_Message.append("\nInjected ");
+      SDC_Message.append(SDC_choice_to_string(query.SDC_record));
+      SDC_Message.append(":");
+      SDC_Message.append(std::to_string(sdc_get_value_payment(this->query)));
+      SDC_Message.append("\n");
+      SDC_Message.append("========================================\n");
+      // 打印
+      // printf("%s\n", SDC_Message.c_str());
+      LOG(INFO) << SDC_Message;
+    }
 
     auto warehouseTableID = warehouse::tableID;
     if (context.write_to_w_ytd) {
@@ -505,6 +494,8 @@ private:
   Storage &storage;
   std::size_t partition_id;
   PaymentQuery query;
+  // bool SDC_To_Injected = false; // 是否执行静默错误的标志位（老版本，已经弃用）——Yu
+
 };
 
 } // namespace tpcc
