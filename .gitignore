@@ -11,6 +11,7 @@ cmake/*
 !*.MD
 !*.py
 
+
 # Unignore the following files
 !*CMakeLists.txt
 !.travis.yml
@@ -25,3 +26,7 @@ cmake/*
 !protocol/
 !scripts/
 !SDCs_injection/
+
+# Ignore all CSV logs
+*.csv
+

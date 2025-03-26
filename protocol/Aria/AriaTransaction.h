@@ -145,6 +145,8 @@ public:
 
   void set_id(std::size_t id) { this->id = id; }
 
+  std::size_t get_id(std::size_t id) const { return this->id; }
+
   void set_tid_offset(std::size_t offset) { this->tid_offset = offset; }
 
   void set_epoch(uint32_t epoch) { this->epoch = epoch; }
