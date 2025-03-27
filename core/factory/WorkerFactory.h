@@ -159,7 +159,7 @@ public:
             coordinator_id, i, db, context, manager->transactions,
             manager->storages, manager->epoch, manager->worker_status,
             manager->total_abort, manager->n_completed_workers,
-            manager->n_started_workers));
+            manager->n_started_workers, manager->randoms[i]));
       }
 
       workers.push_back(manager);

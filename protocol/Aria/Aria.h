@@ -43,7 +43,7 @@ public:
     std::lock_guard<std::mutex> lock(csv_mutex);
     static bool header_written = false;
     if (!header_written) {
-      std::ofstream outFile("write_set_log1.csv", std::ios::app);
+      std::ofstream outFile("write_set_log3.csv", std::ios::app);
       if (outFile.is_open()) {
         outFile << "TxnID,TableID,PartitionID,Key,Value\n";
         header_written = true;
@@ -59,10 +59,10 @@ public:
   bool commit(TransactionType &txn,
               std::vector<std::unique_ptr<Message>> &messages) {
 
-    LOG(INFO) << "Committing txn " << txn.get_id();
+    //LOG(INFO) << "Committing txn " << txn.get_id();
 
     std::lock_guard<std::mutex> lock(csv_mutex);
-    std::ofstream outFile("write_set_log1.csv", std::ios::app);
+    std::ofstream outFile("write_set_log3.csv", std::ios::app);
     bool log_enabled = outFile.is_open();
 
     auto &writeSet = txn.writeSet;

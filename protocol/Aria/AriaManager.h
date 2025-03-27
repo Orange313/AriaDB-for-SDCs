@@ -14,6 +14,7 @@
 #include <atomic>
 #include <thread>
 #include <vector>
+#include <random>
 
 namespace aria {
 
@@ -38,6 +39,14 @@ public:
 
     storages.resize(context.batch_size);
     transactions.resize(context.batch_size);
+    //让每个工作器有自己独立的随机数生成器
+    std::seed_seq seq{static_cast<std::size_t>(coordinator_id)};
+    std::vector<uint32_t>seeds(context.worker_num);
+    seq.generate(seeds.begin(), seeds.end());
+
+    for (size_t i = 0; i < context.worker_num; i++) {
+      randoms.emplace_back(seeds[i]);
+    }
   }
 
   void coordinator_start() override {
@@ -156,5 +165,6 @@ public:
   std::vector<StorageType> storages;
   std::vector<std::unique_ptr<TransactionType>> transactions;
   std::atomic<uint32_t> total_abort;
+  std::vector<RandomType> randoms;//新增成员变量
 };
 } // namespace aria
