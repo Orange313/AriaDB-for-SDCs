@@ -53,8 +53,8 @@ public:
                std::atomic<uint32_t> &worker_status,
                std::atomic<uint32_t> &total_abort,
                std::atomic<uint32_t> &n_complete_workers,
-               std::atomic<uint32_t> &n_started_workers,
-               RandomType &random_ref)
+               std::atomic<uint32_t> &n_started_workers)
+               //RandomType &random_ref)-0
       : Worker(coordinator_id, id), db(db), context(context),
         transactions(transactions), storages(storages), epoch(epoch),
         worker_status(worker_status), total_abort(total_abort),
@@ -62,10 +62,10 @@ public:
         n_started_workers(n_started_workers),
         partitioner(PartitionerFactory::create_partitioner(
             context.partitioner, coordinator_id, context.coordinator_num)),
-        //workload(coordinator_id, db, random, *partitioner),
-        workload(coordinator_id, db, random_ref, *partitioner),
+        workload(coordinator_id, db, random, *partitioner),
+        //workload(coordinator_id, db, random_ref, *partitioner),
         //random(reinterpret_cast<uint64_t>(this)),
-        random(random_ref),
+        //random(random_ref),
         protocol(db, context, *partitioner),
         delay(std::make_unique<SameDelay>(
             coordinator_id, context.coordinator_num, context.delay_time)) {
