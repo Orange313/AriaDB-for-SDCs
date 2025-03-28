@@ -13,6 +13,7 @@
 #include <sstream>
 #include <iomanip>
 #include <mutex>
+#include <atomic>
 
 
 namespace aria {
@@ -43,9 +44,9 @@ public:
     std::lock_guard<std::mutex> lock(csv_mutex);
     static bool header_written = false;
     if (!header_written) {
-      std::ofstream outFile("write_set_log3.csv", std::ios::app);
+      std::ofstream outFile("write_set_log03281033.csv", std::ios::app);
       if (outFile.is_open()) {
-        outFile << "TxnID,TableID,PartitionID,Key,Value\n";
+        outFile << "LSN,TxnID,TableID,PartitionID,Key,Value\n";
         header_written = true;
       }
     }
@@ -62,7 +63,7 @@ public:
     //LOG(INFO) << "Committing txn " << txn.get_id();
 
     std::lock_guard<std::mutex> lock(csv_mutex);
-    std::ofstream outFile("write_set_log3.csv", std::ios::app);
+    std::ofstream outFile("write_set_log03281033.csv", std::ios::app);
     bool log_enabled = outFile.is_open();
 
     auto &writeSet = txn.writeSet;
@@ -76,7 +77,8 @@ public:
       size_t value_len = table->value_size();
 
       if (log_enabled) {
-        outFile << txn.get_id()  << "," << tableId << "," << partitionId << ","
+        uint64_t LSN = global_lsn.fetch_add(1);
+        outFile << LSN << "," << txn.get_id()  << "," << tableId << "," << partitionId << ","
                 << hex_encode(writeKey.get_key(), key_len) << ","
                 << hex_encode(writeKey.get_value(), value_len) << "\n";
       }
@@ -101,8 +103,12 @@ private:
   const ContextType &context;
   Partitioner &partitioner;
   static std::mutex csv_mutex;
+  static std::atomic<uint64_t> global_lsn;
 };
   template <class Database>
   std::mutex Aria<Database>::csv_mutex;
+
+  template <class Database>
+  std::atomic<uint64_t> Aria<Database>::global_lsn{1};
 
 } // namespace aria
