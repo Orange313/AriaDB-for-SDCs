@@ -1,32 +1,15 @@
-# Ignore all
-/*
-cmake/*
-
-
-## Unignore the following extensions
-!*.h
-!*.cc
-!*.cpp
-!*.sh
-!*.MD
-!*.py
-
-
-# Unignore the following files
-!*CMakeLists.txt
-!.travis.yml
-!.gitignore
-
-# Unignore source code directories
-!benchmark/
-!cmake
-!common/
-!core/
-!database/
-!protocol/
-!scripts/
-!SDCs_injection/
-
-# Ignore all CSV logs
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps
+CMakeUserPresets.json
+*.log
 *.csv
-
+.cmake/
