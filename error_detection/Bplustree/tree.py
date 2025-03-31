@@ -1,4 +1,5 @@
 import pandas as pd
+# from Bplustree.node import LeafNode, InternalNode
 from node import LeafNode, InternalNode
 
 DEFAULT_ORDER = 256
@@ -11,8 +12,10 @@ class BPlusTree:
         self.leaf_size = leaf_size
         self.buffer_size = buffer_size
         self.root = LeafNode(leaf_size)
+        self.insert_count = 0
 
     def insert(self, lsn, record):
+        self.insert_count += 1
         node = self.root
         if node.is_leaf:
             node.insert_record(lsn, record)
@@ -65,7 +68,8 @@ class BPlusTree:
 
 def build_bplus_tree_from_csv(csv_path, order=DEFAULT_ORDER, leaf_size=DEFAULT_LEAF_SIZE, buffer_size=DEFAULT_BUFFER_SIZE):
     df = pd.read_csv(csv_path)
-    df.sort_values(by='LSN', inplace=True)
+    print(f"csv length: {len(df)}.")
+    #df.sort_values(by='LSN', inplace=True)
     tree = BPlusTree(order=order, leaf_size=leaf_size, buffer_size=buffer_size)
     for _, row in df.iterrows():
         lsn = int(row['LSN'])
@@ -77,4 +81,6 @@ def build_bplus_tree_from_csv(csv_path, order=DEFAULT_ORDER, leaf_size=DEFAULT_L
             'Value': row['Value']
         }
         tree.insert(lsn, record)
+
+    print(f"insert_count: {tree.insert_count}")
     return tree
