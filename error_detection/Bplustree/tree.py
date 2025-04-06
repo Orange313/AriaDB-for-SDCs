@@ -4,7 +4,7 @@ from node import LeafNode, InternalNode
 
 DEFAULT_ORDER = 256
 DEFAULT_LEAF_SIZE = 512
-DEFAULT_BUFFER_SIZE = 1024
+DEFAULT_BUFFER_SIZE = 512
 
 class BPlusTree:
     def __init__(self, order=DEFAULT_ORDER, leaf_size=DEFAULT_LEAF_SIZE, buffer_size=DEFAULT_BUFFER_SIZE):
@@ -13,6 +13,11 @@ class BPlusTree:
         self.buffer_size = buffer_size
         self.root = LeafNode(leaf_size)
         self.insert_count = 0
+        self.stats={
+            "leaf_nodes":0,
+            "internal_nodes":0,
+            "height": 1
+        }
 
     def insert(self, lsn, record):
         self.insert_count += 1
@@ -34,12 +39,17 @@ class BPlusTree:
                 if new_root:
                     self.root = new_root
 
+    def flush_all(self):
+        if not self.root.is_leaf:
+            self.root.flush_all_buffers()
+
     def search(self, lsn):
+        self.flush_all()
         node = self.root
-        if not node.is_leaf:
-            node.flush_buffer()
+        # if not node.is_leaf:
+        #     node.flush_buffer()
         while not node.is_leaf:
-            node.flush_buffer()
+            # node.flush_buffer()
             idx = node.find_child_index(lsn)
             node = node.children[idx]
         result = []
@@ -49,12 +59,13 @@ class BPlusTree:
         return result
 
     def range_search(self, start_lsn, end_lsn):
+        self.flush_all()
         results = []
         node = self.root
-        if not node.is_leaf:
-            node.flush_buffer()
+        # if not node.is_leaf:
+        #     node.flush_buffer()
         while not node.is_leaf:
-            node.flush_buffer()
+            # node.flush_buffer()
             idx = node.find_child_index(start_lsn)
             node = node.children[idx]
         while node:
@@ -65,6 +76,65 @@ class BPlusTree:
                     return results
             node = node.next_leaf
         return results
+    
+    #统计一些树的信息
+    def get_stats(self):
+        leaf_count = 0
+        leaf = self._find_leftmost_leaf()
+        while leaf:
+            leaf_count += 1
+            leaf = leaf.next_leaf
+        
+        self.stats["leaf_nodes"] = leaf_count
+        self.stats["record_count"] = self._count_records()
+        
+        return {
+            "total_inserts": self.insert_count,
+            "actual_records": self._count_records(),
+            "height": self.stats["height"],
+            "leaf_nodes": self.stats["leaf_nodes"],
+            "internal_nodes": self.stats["internal_nodes"]
+        }
+    def _count_records(self):
+        """计算树中实际存储的记录数"""
+        count = 0
+        leaf = self._find_leftmost_leaf()
+        while leaf:
+            count += len(leaf.records)
+            leaf = leaf.next_leaf
+        return count
+    
+    def _find_leftmost_leaf(self):
+        """查找最左侧的叶子节点"""
+        node = self.root
+        while not node.is_leaf:
+            node = node.children[0]
+        return node
+    
+    def validate(self):
+        """验证B+树结构的正确性"""
+        # 验证叶子节点链表的完整性
+        leaf = self._find_leftmost_leaf()
+        prev_max_lsn = -1
+        
+        while leaf:
+            # 检查记录是否按LSN排序
+            for i in range(1, len(leaf.records)):
+                if leaf.records[i-1][0] > leaf.records[i][0]:
+                    return False, f"叶子节点中的记录未排序: {leaf.records[i-1][0]} > {leaf.records[i][0]}"
+            
+            # 检查节点间的LSN顺序
+            if leaf.records and prev_max_lsn != -1:
+                if prev_max_lsn > leaf.records[0][0]:
+                    return False, f"叶子节点间的LSN不连续: {prev_max_lsn} > {leaf.records[0][0]}"
+            
+            if leaf.records:
+                prev_max_lsn = leaf.records[-1][0]
+            
+            leaf = leaf.next_leaf
+        
+        return True, "B+树结构验证通过"
+
 
 def build_bplus_tree_from_csv(csv_path, order=DEFAULT_ORDER, leaf_size=DEFAULT_LEAF_SIZE, buffer_size=DEFAULT_BUFFER_SIZE):
     df = pd.read_csv(csv_path)
@@ -81,6 +151,18 @@ def build_bplus_tree_from_csv(csv_path, order=DEFAULT_ORDER, leaf_size=DEFAULT_L
             'Value': row['Value']
         }
         tree.insert(lsn, record)
+
+    tree.flush_all()
+
+    valid, message = tree.validate()
+    if not valid:
+        print(f"警告: {message}")
+    
+    stats = tree.get_stats()
+    print(f"插入记录数: {stats['total_inserts']}")
+    print(f"树中实际记录数: {stats['actual_records']}")
+    print(f"树高: {stats['height']}")
+    print(f"叶子节点数: {stats['leaf_nodes']}")
 
     print(f"insert_count: {tree.insert_count}")
     return tree
