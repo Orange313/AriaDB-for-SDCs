@@ -2,10 +2,10 @@ import pandas as pd
 import random
 
 
-input_csv = 'write_set_log03281841.csv' 
-output_csv = 'log_with_sdc_03281841.csv'
+input_csv = 'log1_33021.csv' 
+output_csv = 'log1_with_sdc_33021.csv'
 log_file = 'sdc_injection_log.csv'
-sdc_probability = 0.00005  # 例如 0.00005 对应每两万条注入一条
+sdc_probability = 0.0001  # 例如 0.00005 对应每两万条注入一条
 
 # 读取 CSV
 df = pd.read_csv(input_csv)

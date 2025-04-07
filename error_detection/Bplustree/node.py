@@ -1,4 +1,4 @@
-
+#node.py
 class BPlusNode:
     def __init__(self):
         self.parent = None
@@ -19,15 +19,27 @@ class LeafNode(BPlusNode):
     def is_full(self):
         return len(self.records) > self.leaf_size
 
+    # def insert_record(self, lsn, record):
+    #     inserted = False
+    #     for i, (existing_lsn, _) in enumerate(self.records):
+    #         if lsn < existing_lsn:
+    #             self.records.insert(i, (lsn, record))
+    #             inserted = True
+    #             break
+    #     if not inserted:
+    #         self.records.append((lsn, record))
     def insert_record(self, lsn, record):
-        inserted = False
-        for i, (existing_lsn, _) in enumerate(self.records):
-            if lsn < existing_lsn:
-                self.records.insert(i, (lsn, record))
-                inserted = True
-                break
-        if not inserted:
-            self.records.append((lsn, record))
+        left, right = 0,len(self.records)
+        while left < right:
+            mid = (left + right) // 2
+            if lsn < self.records[mid][0]:
+                right = mid
+            elif lsn == self.records[mid][0]:
+                self.records[mid] = (lsn, record)
+                return
+            else:
+                left = mid + 1
+        self.records.insert(left, (lsn, record))
 
     def split(self):
         mid = len(self.records) // 2
@@ -38,16 +50,27 @@ class LeafNode(BPlusNode):
         #     print(f"LSN discontinuity:{self.records[-1][0]}->{new_leaf.records[0][0]}")
         self.records = self.records[:mid]
         # 验证LSN分裂后的连续性
-        if self.records and new_leaf.records:
-            last_lsn = self.records[-1][0]
-            first_lsn = new_leaf.records[0][0]
-            if last_lsn + 1!= first_lsn:
-                raise ValueError(f"LSN连续性被破坏:{last_lsn} -> {first_lsn}")
+        # if self.records and new_leaf.records:
+        #     last_lsn = self.records[-1][0]
+        #     first_lsn = new_leaf.records[0][0]
+        #     # if last_lsn + 1!= first_lsn:
+        #     #     raise ValueError(f"LSN连续性被破坏:{last_lsn} -> {first_lsn}")
+        #     if first_lsn < last_lsn :
+        #         all_records = sorted(self.records+new_leaf.records, key=lambda x: x[0])
+        #         split_index=0
+        #         for i in range(1,len(all_records)-1):
+        #             if all_records[i+1][0] - all_records[i][0] > 1:
+        #                 split_index = i+1
+        #                 break
+        #         if split_index == 0:
+        #             split_index = len(all_records)//2
 
         new_leaf.next_leaf = self.next_leaf
         self.next_leaf = new_leaf
         new_leaf.parent = self.parent
         return new_leaf
+    
+
 
 
 class InternalNode(BPlusNode):
@@ -64,13 +87,20 @@ class InternalNode(BPlusNode):
 
     def insert_into_buffer(self, lsn, record):
         self.buffer.append((lsn, record))
-        if len(self.buffer) == self.buffer_size:
+        if len(self.buffer) == self.buffer_size//2:#改成半满时下刷
             self.flush_buffer()
 
     def flush_buffer(self):
+        if not self.buffer:
+            return
         self.buffer.sort(key=lambda x: x[0]) #sort is not necessary
-        for lsn, rec in self.buffer:
+        temp_buffer = self.buffer.copy() #创建临时缓冲区副本，避免递归修改
+        self.buffer.clear()
+        for lsn, rec in temp_buffer:
             idx = self.find_child_index(lsn)
+            if idx < 0 or idx >= len(self.children):
+                print(f"警告: LSN {lsn} 找不到合适的子节点 (idx={idx}, children={len(self.children)})")
+                continue
             child = self.children[idx]
             if child.is_leaf:
                 child.insert_record(lsn, rec)
@@ -78,20 +108,16 @@ class InternalNode(BPlusNode):
                     self.split_child(child)
             else:
                 child.insert_into_buffer(lsn, rec)
-        self.buffer.clear() #TODO:我觉得这里可能有问题
+        # self.buffer.clear() #TODO:我觉得这里可能有问题
 
-    def flush_all_beffers(self):
+    def flush_all_buffers(self):
         if not self.is_leaf:
             self.flush_buffer()
             for child in self.children:
                 if not child.is_leaf:
-                    child.flush_all_beffers()
+                    child.flush_all_buffers()
 
     def find_child_index(self, lsn):
-        # for i, key in enumerate(self.keys):
-        #     if lsn < key:
-        #         return i
-        # return len(self.keys)
         left, right = 0, len(self.keys)
         while left < right:
             mid = (left + right) // 2
@@ -113,14 +139,6 @@ class InternalNode(BPlusNode):
             if self.is_full():
                 self.split_self()
         else:
-            # new_node = child.split_internal()
-            # push_up_key = child.keys[-1]
-            # child.keys.pop()
-            # idx = self.children.index(child)
-            # self.children.insert(idx + 1, new_node)
-            # self.keys.insert(idx, push_up_key)
-            # if self.is_full():
-            #     self.split_self()
             mid = len(child.keys)//2
             push_up_key = child.keys[mid]
             new_node = child.split_internal()

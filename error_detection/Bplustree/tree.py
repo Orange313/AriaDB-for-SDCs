@@ -1,10 +1,11 @@
+#tree.py
 import pandas as pd
-# from Bplustree.node import LeafNode, InternalNode
-from node import LeafNode, InternalNode
+from Bplustree.node import LeafNode, InternalNode
+# from node import LeafNode, InternalNode
 
-DEFAULT_ORDER = 256
-DEFAULT_LEAF_SIZE = 512
-DEFAULT_BUFFER_SIZE = 512
+DEFAULT_ORDER = 256 #256
+DEFAULT_LEAF_SIZE = 512 #512
+DEFAULT_BUFFER_SIZE = 512 #512
 
 class BPlusTree:
     def __init__(self, order=DEFAULT_ORDER, leaf_size=DEFAULT_LEAF_SIZE, buffer_size=DEFAULT_BUFFER_SIZE):
@@ -13,11 +14,11 @@ class BPlusTree:
         self.buffer_size = buffer_size
         self.root = LeafNode(leaf_size)
         self.insert_count = 0
-        self.stats={
-            "leaf_nodes":0,
-            "internal_nodes":0,
-            "height": 1
-        }
+        # self.stats={
+        #     "leaf_nodes":0,
+        #     "internal_nodes":0,
+        #     "height": 1
+        # }
 
     def insert(self, lsn, record):
         self.insert_count += 1
@@ -77,6 +78,21 @@ class BPlusTree:
             node = node.next_leaf
         return results
     
+    def robust_search(self, lsn):
+        self.flush_all()
+        results = []
+        
+        # 遍历所有叶子节点
+        leaf = self._find_leftmost_leaf()
+        while leaf:
+            for key, rec in leaf.records:
+                if key == lsn:
+                    results.append(rec)
+            leaf = leaf.next_leaf
+        
+        return results
+    
+    
     #统计一些树的信息
     def get_stats(self):
         leaf_count = 0
@@ -134,7 +150,25 @@ class BPlusTree:
             leaf = leaf.next_leaf
         
         return True, "B+树结构验证通过"
-
+    
+    def fix_leaf_chain(self):
+        all_leaves = []
+        current = self._find_leftmost_leaf()
+        visited = set()
+        # 防止循环引用导致无限循环
+        while current and id(current) not in visited:
+            visited.add(id(current))
+            all_leaves.append(current)
+            next_node = current.next_leaf
+            current.next_leaf = None  # 断开所有链接
+            current = next_node
+        # 按LSN排序所有叶子节点
+        all_leaves.sort(key=lambda leaf: leaf.records[0][0] if leaf.records else float('inf'))   
+        # 重新链接叶子节点
+        for i in range(len(all_leaves) - 1):
+            all_leaves[i].next_leaf = all_leaves[i + 1]
+        
+        return True
 
 def build_bplus_tree_from_csv(csv_path, order=DEFAULT_ORDER, leaf_size=DEFAULT_LEAF_SIZE, buffer_size=DEFAULT_BUFFER_SIZE):
     df = pd.read_csv(csv_path)
@@ -158,11 +192,11 @@ def build_bplus_tree_from_csv(csv_path, order=DEFAULT_ORDER, leaf_size=DEFAULT_L
     if not valid:
         print(f"警告: {message}")
     
-    stats = tree.get_stats()
-    print(f"插入记录数: {stats['total_inserts']}")
-    print(f"树中实际记录数: {stats['actual_records']}")
-    print(f"树高: {stats['height']}")
-    print(f"叶子节点数: {stats['leaf_nodes']}")
+    # stats = tree.get_stats()
+    # print(f"插入记录数: {stats['total_inserts']}")
+    # print(f"树中实际记录数: {stats['actual_records']}")
+    # print(f"树高: {stats['height']}")
+    # print(f"叶子节点数: {stats['leaf_nodes']}")
 
     print(f"insert_count: {tree.insert_count}")
     return tree
