@@ -4,6 +4,8 @@ import csv
 def calculate_node_hash(node):
 
     hasher = hashlib.sha256()
+    # hasher = hashlib.md5()
+    # hasher = hashlib.blake2b()
     if hasattr(node, 'value') and node.value is not None:
         hasher.update(str(node.value).encode())
     if hasattr(node, 'children') and node.children:
@@ -35,7 +37,7 @@ def write_hashes_to_file(partition_hashes, filename='partition_hashes.csv'):
     print(f"分区哈希值已写入文件: {filename}")
     return filename
 
-def generate_partition_hashes(prefix_tree, output_filename='partition_hashes.csv'):
+def generate_partition_hashes(prefix_tree, output_filename):
 
     print("Generating hash...")
     partition_hashes = collect_partition_hashes(prefix_tree)

@@ -7,7 +7,7 @@ DEFAULT_ORDER = 256 #256
 DEFAULT_LEAF_SIZE = 512 #512
 DEFAULT_BUFFER_SIZE = 512 #512
 
-class BPlusTree:
+class BEpsilonTree:
     def __init__(self, order=DEFAULT_ORDER, leaf_size=DEFAULT_LEAF_SIZE, buffer_size=DEFAULT_BUFFER_SIZE):
         self.order = order
         self.leaf_size = leaf_size
@@ -170,11 +170,11 @@ class BPlusTree:
         
         return True
 
-def build_bplus_tree_from_csv(csv_path, order=DEFAULT_ORDER, leaf_size=DEFAULT_LEAF_SIZE, buffer_size=DEFAULT_BUFFER_SIZE):
+def build_bepsilon_tree_from_csv(csv_path, order=DEFAULT_ORDER, leaf_size=DEFAULT_LEAF_SIZE, buffer_size=DEFAULT_BUFFER_SIZE):
     df = pd.read_csv(csv_path)
     print(f"csv length: {len(df)}.")
     #df.sort_values(by='LSN', inplace=True)
-    tree = BPlusTree(order=order, leaf_size=leaf_size, buffer_size=buffer_size)
+    tree = BEpsilonTree(order=order, leaf_size=leaf_size, buffer_size=buffer_size)
     for _, row in df.iterrows():
         lsn = int(row['LSN'])
         record = {
