@@ -6,18 +6,14 @@ class LayeredHashTree:
     
     def __init__(self):
         self.root = None
-        # 使用字典暂存数据，键为 (table_id, partition_id, key)
-        self._pending_data = {}  # {(table,partition,key): (value, lsn)}
+        self.data = {} 
 
     def build_from_b_epsilon_tree(self, b_epsilon_tree):
-        # 1. 扫描BEpsilonTree并保留最新记录
-        self._collect_latest_records(b_epsilon_tree)
-        
-        # 2. 构建分层哈希树
-        self._construct_hash_tree()
+        self.collect_latest_records(b_epsilon_tree)
+        self.construct_hash_tree()
     
-    def _collect_latest_records(self, b_epsilon_tree):
-        leaf = b_epsilon_tree._find_leftmost_leaf()
+    def collect_latest_records(self, b_epsilon_tree):
+        leaf = b_epsilon_tree.find_leftmost_leaf()
         while leaf:
             for lsn, record in leaf.records:
                 composite_key = (
@@ -26,15 +22,15 @@ class LayeredHashTree:
                     str(record['Key'])
                 )
                 # 只保留LSN最大的记录
-                if (composite_key not in self._pending_data or 
-                    lsn > self._pending_data[composite_key][1]):
-                    self._pending_data[composite_key] = (record['Value'], lsn)
+                if (composite_key not in self.data or 
+                    lsn > self.data[composite_key][1]):
+                    self.data[composite_key] = (record['Value'], lsn)
             leaf = leaf.next_leaf
     
-    def _construct_hash_tree(self):
+    def construct_hash_tree(self):
         # 第一层：组织原始数据
         tables = {}
-        for (table_id, partition_id, key), (value, _) in self._pending_data.items():
+        for (table_id, partition_id, key), (value, _) in self.data.items():
             if table_id not in tables:
                 tables[table_id] = {}
             if partition_id not in tables[table_id]:
@@ -94,7 +90,6 @@ class LayeredHashTree:
         return hash_tree
 
     def print_hash_tree(self):
-        """打印格式化的哈希树结构"""
         hash_tree = self.get_all_hashes()
         
         print(f"Root Hash: {hash_tree['root_hash']}")
@@ -116,9 +111,9 @@ class KeyValueNode:
     def __init__(self, key: str, value: Any):
         self.key = key
         self.value = value
-        self.hash = self._calculate_hash()
+        self.hash = self.calculate_hash()
     
-    def _calculate_hash(self):
+    def calculate_hash(self):
         """使用SHA256计算哈希（64字符）"""
         return hashlib.sha256(f"{self.key}:{self.value}".encode()).hexdigest()
 
@@ -127,9 +122,9 @@ class PartitionNode:
     def __init__(self, partition_id: str, children: Dict[str, KeyValueNode]):
         self.partition_id = partition_id
         self.children = children  # {key: KeyValueNode}
-        self.hash = self._calculate_hash()
+        self.hash = self.calculate_hash()
     
-    def _calculate_hash(self):
+    def calculate_hash(self):
         """使用xxhash64计算分区哈希（16字符）"""
         sorted_hashes = [f"{k}:{v.hash}" for k, v in sorted(self.children.items())]
         content = f"{self.partition_id}:" + ",".join(sorted_hashes)
@@ -140,9 +135,9 @@ class TableNode:
     def __init__(self, table_id: str, children: Dict[str, PartitionNode]):
         self.table_id = table_id
         self.children = children  # {partition_id: PartitionNode}
-        self.hash = self._calculate_hash()
+        self.hash = self.calculate_hash()
     
-    def _calculate_hash(self):
+    def calculate_hash(self):
         """使用xxhash64计算表哈希（16字符）"""
         sorted_hashes = [f"{pid}:{p.hash}" for pid, p in sorted(self.children.items())]
         content = f"{self.table_id}:" + ",".join(sorted_hashes)
@@ -152,9 +147,9 @@ class RootNode:
     """根节点（组织表节点）"""
     def __init__(self, children: Dict[str, TableNode]):
         self.children = children  # {table_id: TableNode}
-        self.hash = self._calculate_hash()
+        self.hash = self.calculate_hash()
     
-    def _calculate_hash(self):
+    def calculate_hash(self):
         """使用xxhash32计算根哈希（8字符）"""
         sorted_hashes = [f"{tid}:{t.hash}" for tid, t in sorted(self.children.items())]
         content = "|".join(sorted_hashes)
