@@ -18,7 +18,7 @@ from snapshot_detection.snapshot_based_merkle import LayeredHashTree
 
 if __name__ == "__main__":
   
-    b_epsilon_tree = build_bepsilon_tree_from_csv("log1_33021.csv")
+    b_epsilon_tree = build_bepsilon_tree_from_csv("log2_33021.csv")
     hash_tree = LayeredHashTree()
     hash_tree.build_from_b_epsilon_tree(b_epsilon_tree)
     hash_tree.print_hash_tree()

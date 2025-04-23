@@ -83,7 +83,7 @@ class BEpsilonTree:
         results = []
         
         # 遍历所有叶子节点
-        leaf = self._find_leftmost_leaf()
+        leaf = self.find_leftmost_leaf()
         while leaf:
             for key, rec in leaf.records:
                 if key == lsn:
@@ -96,7 +96,7 @@ class BEpsilonTree:
     #统计一些树的信息
     def get_stats(self):
         leaf_count = 0
-        leaf = self._find_leftmost_leaf()
+        leaf = self.find_leftmost_leaf()
         while leaf:
             leaf_count += 1
             leaf = leaf.next_leaf
@@ -114,13 +114,13 @@ class BEpsilonTree:
     def _count_records(self):
         """计算树中实际存储的记录数"""
         count = 0
-        leaf = self._find_leftmost_leaf()
+        leaf = self.find_leftmost_leaf()
         while leaf:
             count += len(leaf.records)
             leaf = leaf.next_leaf
         return count
     
-    def _find_leftmost_leaf(self):
+    def find_leftmost_leaf(self):
         """查找最左侧的叶子节点"""
         node = self.root
         while not node.is_leaf:
@@ -130,7 +130,7 @@ class BEpsilonTree:
     def validate(self):
         """验证B+树结构的正确性"""
         # 验证叶子节点链表的完整性
-        leaf = self._find_leftmost_leaf()
+        leaf = self.find_leftmost_leaf()
         prev_max_lsn = -1
         
         while leaf:
@@ -153,7 +153,7 @@ class BEpsilonTree:
     
     def fix_leaf_chain(self):
         all_leaves = []
-        current = self._find_leftmost_leaf()
+        current = self.find_leftmost_leaf()
         visited = set()
         # 防止循环引用导致无限循环
         while current and id(current) not in visited:
