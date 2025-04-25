@@ -107,51 +107,51 @@ class LayeredHashTree:
             print("-" * 40)
 
 class KeyValueNode:
-    """键值节点（存储原始数据）"""
+    # 键值节点（存储原始数据）
     def __init__(self, key: str, value: Any):
         self.key = key
         self.value = value
         self.hash = self.calculate_hash()
     
     def calculate_hash(self):
-        """使用SHA256计算哈希（64字符）"""
+        # 使用SHA256计算哈希（64字符）
         return hashlib.sha256(f"{self.key}:{self.value}".encode()).hexdigest()
 
 class PartitionNode:
-    """分区节点（组织键值节点）"""
+    # 分区节点（组织键值节点）
     def __init__(self, partition_id: str, children: Dict[str, KeyValueNode]):
         self.partition_id = partition_id
         self.children = children  # {key: KeyValueNode}
         self.hash = self.calculate_hash()
     
     def calculate_hash(self):
-        """使用xxhash64计算分区哈希（16字符）"""
+        # 使用xxhash64计算分区哈希（16字符）
         sorted_hashes = [f"{k}:{v.hash}" for k, v in sorted(self.children.items())]
         content = f"{self.partition_id}:" + ",".join(sorted_hashes)
         return xxhash.xxh64(content.encode()).hexdigest()[:16]
 
 class TableNode:
-    """表节点（组织分区节点）"""
+    # 表节点（组织分区节点）
     def __init__(self, table_id: str, children: Dict[str, PartitionNode]):
         self.table_id = table_id
         self.children = children  # {partition_id: PartitionNode}
         self.hash = self.calculate_hash()
     
     def calculate_hash(self):
-        """使用xxhash64计算表哈希（16字符）"""
+        # 使用xxhash64计算表哈希（16字符）
         sorted_hashes = [f"{pid}:{p.hash}" for pid, p in sorted(self.children.items())]
         content = f"{self.table_id}:" + ",".join(sorted_hashes)
-        return xxhash.xxh64(content.encode()).hexdigest()[:16]
+        return xxhash.xxh64(content.encode()).hexdigest()#[:16]
 
 class RootNode:
-    """根节点（组织表节点）"""
+    # 根节点（组织表节点）
     def __init__(self, children: Dict[str, TableNode]):
         self.children = children  # {table_id: TableNode}
         self.hash = self.calculate_hash()
     
     def calculate_hash(self):
-        """使用xxhash32计算根哈希（8字符）"""
+        # 使用xxhash32计算根哈希（8字符）
         sorted_hashes = [f"{tid}:{t.hash}" for tid, t in sorted(self.children.items())]
         content = "|".join(sorted_hashes)
-        return xxhash.xxh32(content.encode()).hexdigest()[:8]
+        return xxhash.xxh32(content.encode()).hexdigest()#[:8]
 
