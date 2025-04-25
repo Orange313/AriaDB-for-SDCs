@@ -170,7 +170,7 @@ class BEpsilonTree:
         
         return True
 
-def build_bepsilon_tree_from_csv(csv_path, order=DEFAULT_ORDER, leaf_size=DEFAULT_LEAF_SIZE, buffer_size=DEFAULT_BUFFER_SIZE):
+def build_bepsilon_tree(csv_path, order=DEFAULT_ORDER, leaf_size=DEFAULT_LEAF_SIZE, buffer_size=DEFAULT_BUFFER_SIZE):
     df = pd.read_csv(csv_path)
     print(f"csv length: {len(df)}.")
     #df.sort_values(by='LSN', inplace=True)

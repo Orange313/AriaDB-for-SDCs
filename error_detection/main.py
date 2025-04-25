@@ -1,8 +1,10 @@
-from Bplustree.tree import build_bepsilon_tree_from_csv
+from Bplustree.tree import build_bepsilon_tree
 from snapshot_detection.incremental_snapshot import generate_incremental_snapshot_from_bplus_tree
 from snapshot_detection.tree_hash import generate_partition_hashes
 from snapshot_detection.snapshot_based_merkle import LayeredHashTree
-
+from snapshot_detection.hash_comparator import compare_trees_bfs
+import threading
+# 单线程 基础版
 # if __name__ == "__main__":
 
 #     bepsilon_tree = build_bepsilon_tree_from_csv("log2_33021.csv")
@@ -16,9 +18,78 @@ from snapshot_detection.snapshot_based_merkle import LayeredHashTree
 #     hash_output_filename = "partition_hashes2_md5.csv"
 #     generate_partition_hashes(prefix_tree, hash_output_filename)
 
-if __name__ == "__main__":
+# 单线程 改良版
+# def build_tree(log_file):
   
-    b_epsilon_tree = build_bepsilon_tree_from_csv("log2_33021.csv")
-    hash_tree = LayeredHashTree()
-    hash_tree.build_from_b_epsilon_tree(b_epsilon_tree)
-    hash_tree.print_hash_tree()
+#     b_epsilon_tree = build_bepsilon_tree(log_file)
+#     hash_tree = LayeredHashTree()
+#     hash_tree.build_from_b_epsilon_tree(b_epsilon_tree)
+#     # hash_tree.print_hash_tree()
+#     return hash_tree
+
+
+# if __name__ == "__main__":
+#     print("Building tree from log1......")
+#     tree1 = build_tree("log1_with_sdc_33021.csv")
+
+#     print("Building tree from log1......")
+#     tree2 = build_tree("log1_with_sdc_33021.csv")
+
+
+class TreeBuilder:
+    def __init__(self, log_file):
+        self.log_file=log_file
+        self.tree = None
+        self.error = None
+
+    def build(self):
+        try:
+            b_epsilon_tree = build_bepsilon_tree(self.log_file)
+            hash_tree = LayeredHashTree()
+            hash_tree.build_from_b_epsilon_tree(b_epsilon_tree)
+            self.tree = hash_tree
+        except Exception as e:
+            self.error = e
+    
+def main():
+    results = []
+    
+    builder1 = TreeBuilder("log1_with_sdc_33021.csv")
+    builder2 = TreeBuilder("log2_33021.csv")
+    
+    # 创建并启动线程
+    print("Start...")
+    thread1 = threading.Thread(target=builder1.build)
+    thread2 = threading.Thread(target=builder2.build)
+    
+    thread1.start()
+    thread2.start()
+    
+    thread1.join()
+    thread2.join()
+    
+    results.extend([builder1, builder2])
+    
+    # 检查构建结果
+    if len(results) != 2:
+        print("Error: Failed to  build two trees!")
+        exit(1)
+    
+    if results[0].error or results[1].error:
+        print("An error occurred during the build process!")
+        if results[0].error:
+            print(f"NodeA Error: {results[0].error}")
+        if results[1].error:
+            print(f"NodeB Error: {results[1].error}")
+        exit(1)
+
+    tree1 = results[0].tree
+    tree2 = results[1].tree
+    
+    # 比较两棵树
+    print("\nBegin to compare...")
+    compare_trees_bfs(tree1, tree2)
+
+
+if __name__ == "__main__":
+    main()
