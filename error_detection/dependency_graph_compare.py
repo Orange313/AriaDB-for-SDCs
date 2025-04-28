@@ -1,69 +1,87 @@
+import threading
 from collections import defaultdict
+from queue import Queue
 
-def parse_log_file(filename):
-    #解析日志文件
-    transactions = defaultdict(list)
-    all_entries = []
-    transaction_blocks = []
-    current_block = []
-    current_txn_id = None
-    
-    with open(filename, 'r') as f:
-        is_header = True  
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
+def parse_log_file(filename, result_queue):
+    # 解析日志文件
+    try:
+        transactions = defaultdict(list)
+        all_entries = []
+        transaction_blocks = []
+        current_block = []
+        current_txn_id = None
+        
+        with open(filename, 'r') as f:
+            is_header = True  
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                    
+                if is_header:
+                    is_header = False
+                    continue
+                    
+                parts = line.split(',')
+                if len(parts) < 6:
+                    continue
+                txn_id, table_id, partition_id, key, value = parts[1:6]
                 
-            if is_header:
-                is_header = False
-                continue
-                
-            parts = line.split(',')
-            if len(parts) < 6:
-                continue
-            txn_id, table_id, partition_id, key, value = parts[1:6]
-            
-            try:
-                txn_id = int(txn_id)
-                entry = {
-                    'TxnID': txn_id,
-                    'TableID': int(table_id),
-                    'PartitionID': int(partition_id),
-                    'Key': key,
-                    'Value': value,
-                    'raw': ','.join(parts[1:]) 
-                }
-                #新的事务ID，创建新的块
-                if txn_id != current_txn_id:
-                    if current_block:
-                        transaction_blocks.append({
-                            'TxnID': current_txn_id,
-                            'Entries': current_block.copy()
-                        })
-                    current_block = [entry]
-                    current_txn_id = txn_id
-                else:
-                    current_block.append(entry)
-                
-                transactions[txn_id].append(entry)
-                all_entries.append(entry)
-                
-            except ValueError as e:
-                print(f"Warning:Unable to parse line:{line}，error:{e}")
-                continue
-    
-    # 添加最后一个事务块
-    if current_block:
-        transaction_blocks.append({
-            'TxnID': current_txn_id,
-            'Entries': current_block
+                try:
+                    txn_id = int(txn_id)
+                    entry = {
+                        'TxnID': txn_id,
+                        'TableID': int(table_id),
+                        'PartitionID': int(partition_id),
+                        'Key': key,
+                        'Value': value,
+                        'raw': ','.join(parts[1:]) 
+                    }
+                    # 新的事务ID，创建新的块
+                    if txn_id != current_txn_id:
+                        if current_block:
+                            transaction_blocks.append({
+                                'TxnID': current_txn_id,
+                                'Entries': current_block.copy()
+                            })
+                        current_block = [entry]
+                        current_txn_id = txn_id
+                    else:
+                        current_block.append(entry)
+                    
+                    transactions[txn_id].append(entry)
+                    all_entries.append(entry)
+                    
+                except ValueError as e:
+                    print(f"Warning: Unable to parse line: {line}, error: {e}")
+                    continue
+        
+        # 添加最后一个事务块
+        if current_block:
+            transaction_blocks.append({
+                'TxnID': current_txn_id,
+                'Entries': current_block
+            })
+        
+        # 构建事务依赖图
+        dependency_graph, transaction_blocks = build_block_dependency_graph(transaction_blocks)
+        
+        result_queue.put({
+            'filename': filename,
+            'transactions': transactions,
+            'blocks': transaction_blocks,
+            'entries': all_entries,
+            'graph': dependency_graph,
+            'error': None
         })
-    
-    return transactions, transaction_blocks, all_entries
+    except Exception as e:
+        result_queue.put({
+            'filename': filename,
+            'error': str(e)
+        })
 
 def build_block_dependency_graph(transaction_blocks):
-    # 构建事务依赖
+    # 构建事务依赖图
     key_to_blocks = defaultdict(list)
     block_order = {}
     
@@ -98,7 +116,7 @@ def build_block_dependency_graph(transaction_blocks):
     return dependency_graph, transaction_blocks
 
 def find_block_cycles(graph):
-    #判断是否循环依赖
+    # 判断是否循环依赖
     cycles = []
     
     def dfs(node, path, visited):
@@ -124,7 +142,7 @@ def find_block_cycles(graph):
     return cycles
 
 def compare_block_dependency_graphs(graph1, blocks1, graph2, blocks2):
-    #比较块
+    # 比较块依赖图
     if len(blocks1) != len(blocks2):
         return False, "The number of transaction blocks is different."
     
@@ -172,8 +190,9 @@ def compare_block_dependency_graphs(graph1, blocks1, graph2, blocks2):
     return True, "Transaction block dependencies are the same."
 
 def compare_log_content(entries1, entries2):
+    # 比较日志内容
     if len(entries1) != len(entries2):
-        return False, f"The number of log entries is different."
+        return False, f"The number of log entries is different.", []
     
     diff_count = 0
     diff_details = []
@@ -198,6 +217,7 @@ def compare_log_content(entries1, entries2):
     return True, "The log content is completely the same.", []
 
 def compare_transaction_blocks(blocks1, blocks2):
+    # 比较事务块
     # 按事务ID分组
     blocks_by_txn1 = defaultdict(list)
     for block in blocks1:
@@ -261,104 +281,128 @@ def compare_transaction_blocks(blocks1, blocks2):
     return True, "The transaction blocks are the same.", []
 
 def main():
-
     file1 = "log1_with_sdc_33021.csv"
     file2 = "log2_33021.csv"
     
-    try:
-        txns1, blocks1, entries1 = parse_log_file(file1)
-        graph1, blocks1 = build_block_dependency_graph(blocks1)
+
+    result_queue = Queue()
+    
+    thread1 = threading.Thread(target=parse_log_file, args=(file1, result_queue))
+    thread2 = threading.Thread(target=parse_log_file, args=(file2, result_queue))
+    
+    thread1.start()
+    thread2.start()
+    
+    thread1.join()
+    thread2.join()
+    
+    # 收集结果
+    results = []
+    while not result_queue.empty():
+        results.append(result_queue.get())
+    
+    # 检查是否有错误
+    errors = [r for r in results if r['error']]
+    if errors:
+        for error in errors:
+            print(f"Error processing {error['filename']}: {error['error']}")
+        return
+    
+    # 提取解析结果
+    file1_data = next(r for r in results if r['filename'] == file1)
+    file2_data = next(r for r in results if r['filename'] == file2)
+    
+    txns1 = file1_data['transactions']
+    blocks1 = file1_data['blocks']
+    entries1 = file1_data['entries']
+    graph1 = file1_data['graph']
+    
+    txns2 = file2_data['transactions']
+    blocks2 = file2_data['blocks']
+    entries2 = file2_data['entries']
+    graph2 = file2_data['graph']
+    
+    # 比较事务块数量和结构
+    print(f"\nComparing the constructure of transaction-blocks:")
+    is_same_blocks, reason_blocks, details_blocks = compare_transaction_blocks(blocks1, blocks2)
+    if not is_same_blocks:
+        print(f"{reason_blocks}")
+        print("The differences of transaction-blocks:")
+        for diff in details_blocks:
+            if diff["type"] == "block_count":
+                print(f" TxnID {diff['txn_id']}: log1 block counts:{diff['file1_count']}, log2 block counts:{diff['file2_count']}")
+            elif diff["type"] == "entry_count":
+                print(f" TxnID {diff['txn_id']} block{diff['block_index']+1}: log1 counts {diff['file1_count']}; log2 counts {diff['file2_count']}")
+            elif diff["type"] == "entry_content":
+                print(f" TxnID {diff['txn_id']} block{diff['block_index']+1} entry{diff['entry_index']+1} differs:")
+                print(f"    log1: {diff['file1_entry']['raw']}")
+                print(f"    log2: {diff['file2_entry']['raw']}")
+    else:
+        print(f"{reason_blocks}")
+    
+    # 比较日志内容
+    print(f"\nComparing log content:")
+    is_same_content, reason_content, details_content = compare_log_content(entries1, entries2)
+    if not is_same_content:
+        print(f"{reason_content}")
+        if details_content:
+            print("Details of the discrepancies in the log content")
+            for diff in details_content:
+                print(f"    log1: {diff['file1']['raw']}")
+                print(f"    log2: {diff['file2']['raw']}")
+    else:
+        print(f"{reason_content}")
+    
+    # 比较依赖关系
+    print(f"\nComparing log dependency:")
+    is_same_deps, reason_deps = compare_block_dependency_graphs(graph1, blocks1, graph2, blocks2)
+    if not is_same_deps:
+        print(f"{reason_deps}")
         
-        txns2, blocks2, entries2 = parse_log_file(file2)
-        graph2, blocks2 = build_block_dependency_graph(blocks2)
+        # 找出不同的依赖关系 (按事务ID分组)
+        txn_ids1 = set(block['TxnID'] for block in blocks1)
+        txn_ids2 = set(block['TxnID'] for block in blocks2)
+        all_txn_ids = txn_ids1 | txn_ids2
         
-        # 比较事务块数量和结构
-        print(f"\ncomparing the constructure of transaction-blocks:")
-        is_same_blocks, reason_blocks, details_blocks = compare_transaction_blocks(blocks1, blocks2)
+        print("Dependency Differences by Transaction ID:")
+        for txn_id in sorted(all_txn_ids):
+            # 获取该事务ID的所有块
+            blocks_in_txn1 = [b for b in blocks1 if b['TxnID'] == txn_id]
+            blocks_in_txn2 = [b for b in blocks2 if b['TxnID'] == txn_id]
+            
+            if len(blocks_in_txn1) != len(blocks_in_txn2):
+                print(f"TxnID {txn_id}: log1 block counts:{len(blocks_in_txn1)}, log2 block counts:{len(blocks_in_txn2)}")
+                continue
+            
+            # 比较每个块的依赖
+            for i in range(min(len(blocks_in_txn1), len(blocks_in_txn2))):
+                block1 = blocks_in_txn1[i]
+                block2 = blocks_in_txn2[i]
+                
+                block_id1 = block1['BlockID']
+                block_id2 = block2['BlockID']
+                
+                deps1 = {blocks1[dep_id]['TxnID'] for dep_id in graph1.get(block_id1, set())}
+                deps2 = {blocks2[dep_id]['TxnID'] for dep_id in graph2.get(block_id2, set())}
+                
+                if deps1 != deps2:
+                    print(f"TxnID {txn_id} block{i+1}:")
+                    print(f"  log1 dependencies: {sorted(deps1)}")
+                    print(f"  log2 dependencies: {sorted(deps2)}")
+    else:
+        print(f"{reason_deps}")
+    
+    # 对比结果
+    if is_same_blocks and is_same_content and is_same_deps:
+        print("\nLogs are completely the same.")
+    else:
+        print("\nThere is a difference between the two log files:")
         if not is_same_blocks:
-            print(f"{reason_blocks}")
-            print("The differences of trasnsaction-blocks:")
-            for diff in details_blocks:
-                if diff["type"] == "block_count":
-                    print(f" TxnID {diff['txn_id']}: log1 block counts:{diff['file1_count']},log2 block countd:{diff['file2_count']}")
-                elif diff["type"] == "entry_count":
-                    print(f" TxnID {diff['txn_id']} block{diff['block_index']+1}: log1 counts{diff['file1_count']}; log2 counts{diff['file2_count']}")
-                elif diff["type"] == "entry_content":
-                    print(f" TxnID {diff['txn_id']} block{diff['block_index']+1} entry{diff['entry_index']+1} differs:")#事务的x块的第x个条目不同
-                    print(f"    log1: {diff['file1_entry']['raw']}")
-                    print(f"    log2: {diff['file2_entry']['raw']}")
-        else:
-            print(f"{reason_blocks}")
-        
-        # 比较日志内容
-        print(f"\nComparing log content:")
-        is_same_content, reason_content, details_content = compare_log_content(entries1, entries2)
+            print(f"- Transaction block constructure: {reason_blocks}")
         if not is_same_content:
-            print(f"{reason_content}")
-            if details_content:
-                print("Details of the discrepancies in the log content")
-                for diff in details_content:
-                    # print(f"  第{diff['index']+1}条:")
-                    print(f"    log1: {diff['file1']['raw']}")
-                    print(f"    log2: {diff['file2']['raw']}")
-        else:
-            print(f"{reason_content}")
-        
-        # 比较依赖关系
-        print(f"\nComparing log dependency:")
-        is_same_deps, reason_deps = compare_block_dependency_graphs(graph1, blocks1, graph2, blocks2)
+            print(f"- Log content: {reason_content}")
         if not is_same_deps:
-            print(f"{reason_deps}")
-            
-            # 找出不同的依赖关系 (按事务ID分组)
-            txn_ids1 = set(block['TxnID'] for block in blocks1)
-            txn_ids2 = set(block['TxnID'] for block in blocks2)
-            all_txn_ids = txn_ids1 | txn_ids2
-            
-            print("Dependency Differences by Transaction ID:")
-            for txn_id in sorted(all_txn_ids):
-                # 获取该事务ID的所有块
-                blocks_in_txn1 = [b for b in blocks1 if b['TxnID'] == txn_id]
-                blocks_in_txn2 = [b for b in blocks2 if b['TxnID'] == txn_id]
-                
-                if len(blocks_in_txn1) != len(blocks_in_txn2):
-                    print(f"TxnID {txn_id}: log1 block counts:{len(blocks_in_txn1)},log2 block counts:{len(blocks_in_txn2)}")
-                    continue
-                
-                # 比较每个块的依赖
-                for i in range(min(len(blocks_in_txn1), len(blocks_in_txn2))):
-                    block1 = blocks_in_txn1[i]
-                    block2 = blocks_in_txn2[i]
-                    
-                    block_id1 = block1['BlockID']
-                    block_id2 = block2['BlockID']
-                    
-                    deps1 = {blocks1[dep_id]['TxnID'] for dep_id in graph1.get(block_id1, set())}
-                    deps2 = {blocks2[dep_id]['TxnID'] for dep_id in graph2.get(block_id2, set())}
-                    #日志中依赖的事务：
-                    if deps1 != deps2:
-                        print(f"TxnID {txn_id} block{i+1}:")
-                        print(f"  log1: {sorted(deps1)}")
-                        print(f"  log2: {sorted(deps2)}")
-        else:
-            print(f"{reason_deps}")
-        
-        # 对比结果
-        if is_same_blocks and is_same_content and is_same_deps:
-            print("Logs are completely the same.")
-        else:
-            print("There is a difference between the two log files:")
-            if not is_same_blocks:
-                print(f"Transaction block constructure: {reason_blocks}")
-            if not is_same_content:
-                print(f"log content: {reason_content}")
-            if not is_same_deps:
-                print(f"trasaction dependencies: {reason_deps}")
-        
-    except FileNotFoundError as e:
-        print(f"File is not found: {e}")
-    except Exception as e:
-        print(f"Error: {e}")
+            print(f"- Transaction dependencies: {reason_deps}")
 
 if __name__ == "__main__":
     main()

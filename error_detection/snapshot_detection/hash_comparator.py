@@ -25,11 +25,11 @@ def compare_trees_bfs(tree1, tree2):
         node_type, path = queue.popleft()
         
         if node_type == 'root':
-            # 对称结构下可以直接遍历任意一棵树的tables
+
             for table_id in hashes1['tables']:
                 hash1 = hashes1['tables'][table_id]['table_hash']
                 hash2 = hashes2['tables'][table_id]['table_hash']
-                
+                #根节点哈希不同时，比对表节点哈希
                 if hash1 != hash2:
                     differences['tables'][table_id] = {
                         'tree1': hash1,
@@ -39,7 +39,7 @@ def compare_trees_bfs(tree1, tree2):
         
         elif node_type == 'table':
             table_id = path
-            # 对称结构下可以直接遍历该表的所有分区
+
             for partition_id in hashes1['tables'][table_id]['partitions']:
                 hash1 = hashes1['tables'][table_id]['partitions'][partition_id]['partition_hash']
                 hash2 = hashes2['tables'][table_id]['partitions'][partition_id]['partition_hash']
