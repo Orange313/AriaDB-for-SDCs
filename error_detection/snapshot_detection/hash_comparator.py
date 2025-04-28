@@ -1,4 +1,5 @@
 from collections import deque
+from snapshot_detection.tree_hash import collect_partition_hashes
 
 def compare_trees_bfs(tree1, tree2):
 
@@ -72,5 +73,46 @@ def compare_trees_bfs(tree1, tree2):
     
     print(f"Different table counts: {len(differences['tables'])}")
     print(f"Different partition counts: {len(differences['partitions'])}")
+    
+    return differences
+
+# 前缀树+哈希法比较哈希
+def compare_partition_hashes(tree1,tree2):
+    hashes1 = collect_partition_hashes(tree1)
+    hashes2 = collect_partition_hashes(tree2)
+
+    hash_dict1 = {(table_id, partition_id): hash_value for table_id, partition_id, hash_value in hashes1}
+    hash_dict2 = {(table_id, partition_id): hash_value for table_id, partition_id, hash_value in hashes2}
+
+    differences = {
+        'only_in_tree1':[],
+        'only_in_tree2':[],
+        'different_hash':[]
+    }
+
+    for (table_id, partition_id), hash1 in hash_dict1.items():
+        if (table_id, partition_id) not in hash_dict2:
+            differences['only_in_tree1'].append((table_id, partition_id, hash1))
+        elif hash1 != hash_dict2[(table_id, partition_id)]:
+            hash2 = hash_dict2[(table_id, partition_id)]
+            differences['different_hash'].append((table_id, partition_id, hash1, hash2))
+
+    for (table_id, partition_id), hash2 in hash_dict2.items():
+        if (table_id, partition_id) not in hash_dict1:
+            differences['only_in_tree2'].append((table_id, partition_id, hash2))
+
+    print(f"\ndifferent hashes count: {len(differences['different_hash'])}")
+    if differences['different_hash']:
+        print("partition:")
+        for table_id, partition_id, hash1, hash2 in differences['different_hash']:
+            print(f"  table{table_id}/partition{partition_id}:")
+            print(f"    tree1 hash: {hash1}")
+            print(f"    tree2 hahs: {hash2}")
+
+    total_differences = len(differences['only_in_tree1']) + len(differences['only_in_tree2']) + len(differences['different_hash'])
+    if total_differences == 0:
+        print("\n结论: Two tree hashes are completely the same.")
+    else:
+        print(f"\n结论: Different partition counts:{total_differences}")
     
     return differences

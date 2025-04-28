@@ -87,7 +87,7 @@ def generate_incremental_snapshot_from_bplus_tree(bplus_tree):
     leaf_count = 0
     while leaf:
         leaf_count += 1
-        print(f"Leaf {leaf_count}: LSN range {leaf.records[0][0]} to {leaf.records[-1][0]}")
+        # print(f"Leaf {leaf_count}: LSN range {leaf.records[0][0]} to {leaf.records[-1][0]}")
         for lsn, record in leaf.records:
             prefix_tree.insert(lsn, record)
             record_count += 1
