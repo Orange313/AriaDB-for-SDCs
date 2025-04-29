@@ -4,6 +4,7 @@ from snapshot_detection.tree_hash import generate_partition_hashes
 from snapshot_detection.snapshot_based_merkle import LayeredHashTree
 from snapshot_detection.hash_comparator import compare_trees_bfs, compare_partition_hashes
 import threading
+import time
 '''单线程 基础版'''
 # if __name__ == "__main__":
 
@@ -72,8 +73,12 @@ def main():
     
     # 比较两棵树
     print("\nStart to compare two trees...")
+
+    start_time = time.time()
     differences = compare_partition_hashes(tree1, tree2)
-    
+    end_time = time.time()
+    duration = end_time - start_time
+    print(f"Total time : {duration:.4f} seconds")
     
     return differences
 
