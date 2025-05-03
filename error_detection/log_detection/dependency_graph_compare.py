@@ -279,6 +279,16 @@ def compare_transaction_blocks(blocks1, blocks2):
         return False, f"The number of differences is {diff_count}", diff_details
     
     return True, "The transaction blocks are the same.", []
+# def def compare_log_content_brute(entries1, entries2)
+# diff_count = 0
+# for entry1 in log1_entries:       # O(N)
+#     found = False
+#     for entry2 in log2_entries:   # O(M)
+#         if entry1['raw'] == entry2['raw']:
+#             found = True
+#             break
+#     if not found:
+#         diff_count += 1
 
 def main():
     file1 = "log_01a.csv"
