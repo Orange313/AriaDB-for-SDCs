@@ -281,8 +281,8 @@ def compare_transaction_blocks(blocks1, blocks2):
     return True, "The transaction blocks are the same.", []
 
 def main():
-    file1 = "log1_with_sdc_33021.csv"
-    file2 = "log2_33021.csv"
+    file1 = "log_01a.csv"
+    file2 = "log_01b.csv"
     
 
     result_queue = Queue()

@@ -36,8 +36,8 @@ class TreeBuilder:
 
 def main():
     results = []
-    builder1 = TreeBuilder("log1_with_sdc_33021.csv")
-    builder2 = TreeBuilder("log2_33021.csv")
+    builder1 = TreeBuilder("log_01a.csv")
+    builder2 = TreeBuilder("log_01b.csv")
     
     # 创建并启动线程
     print('Strating...')

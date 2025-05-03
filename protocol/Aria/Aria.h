@@ -44,7 +44,7 @@ public:
     std::lock_guard<std::mutex> lock(csv_mutex);
     static bool header_written = false;
     if (!header_written) {
-      std::ofstream outFile("write_set_log03281841.csv", std::ios::app);
+      std::ofstream outFile("log_02.csv", std::ios::app);
       if (outFile.is_open()) {
         outFile << "LSN,TxnID,TableID,PartitionID,Key,Value\n";
         header_written = true;
@@ -63,7 +63,7 @@ public:
     //LOG(INFO) << "Committing txn " << txn.get_id();
 
     std::lock_guard<std::mutex> lock(csv_mutex);
-    std::ofstream outFile("write_set_log03281841.csv", std::ios::app);
+    std::ofstream outFile("log_02.csv", std::ios::app);
     bool log_enabled = outFile.is_open();
 
     auto &writeSet = txn.writeSet;
