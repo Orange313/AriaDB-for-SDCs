@@ -75,7 +75,7 @@ def compare_trees_bfs(tree1, tree2):
     print(f"Different table counts: {len(differences['tables'])}")
     print(f"Different partition counts: {len(differences['partitions'])}")
     
-    return differences
+    return differences,differences['partitions']
 
 # 前缀树+哈希法比较哈希
 def compare_partition_hashes(tree1,tree2):
