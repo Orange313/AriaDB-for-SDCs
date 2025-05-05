@@ -387,8 +387,8 @@ def run_comparison(file1, file2):
     return elapsed_time, detection_rate, total_error_count
 
 def main():
-    file1 = "error_detection\data\original\A\log01a.csv"
-    file2 = "error_detection\data\original\B\log01b.csv"
+    file1 = "error_detection\data\original\A\log02a.csv"
+    file2 = "error_detection\data\original\B\log02b.csv"
 
     total_time = 0
     total_detection_rate = 0

@@ -3,7 +3,7 @@ from collections import defaultdict
 from queue import Queue
 import time
 
-ERROR_INJECTION_COUNT = 7
+ERROR_INJECTION_COUNT = 5
 REPEAT_TIMES = 5           # 重复执行次数
 def parse_log_file(filename, result_queue):
     # 解析日志文件
@@ -358,7 +358,11 @@ def run_comparison(file1, file2):
 
     # 比较依赖关系
     is_same_deps, reason_deps = compare_block_dependency_graphs(graph1, blocks1, graph2, blocks2)
-    dep_error_count = 0 if is_same_deps else 1  
+    dep_error_count = 0 if is_same_deps else 1 
+
+    if not is_same_deps:
+        print("\n发现事务依赖差异:")
+        print(reason_deps) 
 
     # 比较日志内容
     is_same_content, reason_content, details_content = compare_log_content(entries1, entries2)
@@ -371,8 +375,8 @@ def run_comparison(file1, file2):
     return elapsed_time, detection_rate, total_error_count
 
 def main():
-    file1 = "error_detection\data\original\A\log01a.csv"
-    file2 = "error_detection\data\original\B\log01b.csv"
+    file1 = "error_detection\data\original\A\log02a.csv"
+    file2 = "error_detection\data\original\B\log02b.csv"
 
     total_time = 0
     total_detection_rate = 0
