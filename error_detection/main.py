@@ -36,6 +36,7 @@ class TreeBuilder:
 
 def main():
     results = []
+    start_time = time.time()
     builder1 = TreeBuilder("log_01a.csv")
     builder2 = TreeBuilder("log_01b.csv")
     
@@ -74,11 +75,12 @@ def main():
     # 比较两棵树
     print("\nStart to compare two trees...")
 
-    start_time = time.time()
+    start_time_compare = time.time()
     differences = compare_partition_hashes(tree1, tree2)
     end_time = time.time()
     duration = end_time - start_time
-    print(f"Total time : {duration:.4f} seconds")
+    duration_compare = end_time - start_time_compare
+    print(f"Total time : {duration:.4f} seconds, compare time : {duration_compare:.4f}")
     
     return differences
 
@@ -118,7 +120,7 @@ def main():
     
 # def main():
 #     results = []
-    
+#     start_time = time.time()
 #     builder1 = TreeBuilder("log1_with_sdc_33021.csv")
 #     builder2 = TreeBuilder("log2_33021.csv")
     
@@ -153,8 +155,10 @@ def main():
     
 #     # 比较两棵树
 #     print("\nBegin to compare...")
+#     
 #     compare_trees_bfs(tree1, tree2)
-
-
+    # end_time = time.time()
+    # duration = end_time - start_time
+    # print(f"Total time : {duration:.4f} seconds")
 if __name__ == "__main__":
     main()

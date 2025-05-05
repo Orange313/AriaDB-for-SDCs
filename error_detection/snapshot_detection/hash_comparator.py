@@ -1,5 +1,6 @@
 from collections import deque
 from snapshot_detection.tree_hash import collect_partition_hashes
+import time
 
 def compare_trees_bfs(tree1, tree2):
 
@@ -10,7 +11,7 @@ def compare_trees_bfs(tree1, tree2):
         'tables': {},
         'partitions': {}
     }
-    
+    start_time_compare = time.time()
     # 比较根节点
     if hashes1['root_hash'] == hashes2['root_hash']:
         print("The root node hash is the same!")
@@ -51,9 +52,9 @@ def compare_trees_bfs(tree1, tree2):
                         'tree1': hash1,
                         'tree2': hash2
                     }
-
-    
-
+    end_time = time.time()
+    duration_compare = end_time - start_time_compare
+    print(f"Compare time : {duration_compare:.4f} seconds")
     print("\nDiffrences report:")
     print("=" * 80)
     
