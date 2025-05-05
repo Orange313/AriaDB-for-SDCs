@@ -1,10 +1,14 @@
 from Bplustree.tree import build_bepsilon_tree
-from snapshot_detection.incremental_snapshot import generate_incremental_snapshot_from_bplus_tree
+from snapshot_detection.incremental_snapshot import generate_incremental_snapshot_from_bepsilon_tree
 from snapshot_detection.tree_hash import generate_partition_hashes
 from snapshot_detection.snapshot_based_merkle import LayeredHashTree
 from snapshot_detection.hash_comparator import compare_trees_bfs, compare_partition_hashes
 import threading
 import time
+
+ERROR_INJECTION_COUNT = 7
+REPEAT_TIMES = 5   
+
 '''单线程 基础版'''
 # if __name__ == "__main__":
 
@@ -27,21 +31,22 @@ class TreeBuilder:
         
     def build(self):
         try:
-
+            start_bepsilon = time.time()
             bepsilon_tree = build_bepsilon_tree(self.log_file)
-            self.prefix_tree = generate_incremental_snapshot_from_bplus_tree(bepsilon_tree)
+            end_bepsilon = time.time()
+            self.bepsilon_time = end_bepsilon - start_bepsilon
+            self.prefix_tree = generate_incremental_snapshot_from_bepsilon_tree(bepsilon_tree)
         except Exception as e:
             self.error = e
             print(f"Error: {e}")
 
-def main():
+def run_comparison():
     results = []
-    start_time = time.time()
+    
     builder1 = TreeBuilder("log_01a.csv")
     builder2 = TreeBuilder("log_01b.csv")
     
     # 创建并启动线程
-    print('Strating...')
     thread1 = threading.Thread(target=builder1.build)
     thread2 = threading.Thread(target=builder2.build)
     
@@ -60,29 +65,68 @@ def main():
             print(f"Tree1: {results[0].error}")
         if results[1].error:
             print(f"Tree2: {results[1].error}")
-        return
+        return None, None, None
     
+    bepsilon_time = max(results[0].bepsilon_time, results[1].bepsilon_time)
+    start_time = time.time()
     tree1 = results[0].prefix_tree
     tree2 = results[1].prefix_tree
 
-    # print("正在生成哈希值...")
-    # hash_output_filename1 = "partition_hashes1.csv"
-    # hash_output_filename2 = "partition_hashes2.csv"
     print("Generating hash...")
     generate_partition_hashes(tree1)
     generate_partition_hashes(tree2)
     
     # 比较两棵树
     print("\nStart to compare two trees...")
-
     start_time_compare = time.time()
-    differences = compare_partition_hashes(tree1, tree2)
+    total_differences = compare_partition_hashes(tree1, tree2)
     end_time = time.time()
-    duration = end_time - start_time
-    duration_compare = end_time - start_time_compare
-    print(f"Total time : {duration:.4f} seconds, compare time : {duration_compare:.4f}")
     
-    return differences
+    total_time = end_time - start_time
+    comparison_time = end_time - start_time_compare
+    
+    # 计算错误检出率
+    error_count = len(total_differences) if total_differences else 0
+    detection_rate = min(error_count / ERROR_INJECTION_COUNT, 1.0)
+    
+    print(f"Total time: {total_time:.4f} seconds, Compare time: {comparison_time:.4f} seconds")
+    print(f"Detected errors: {error_count}, Detection rate: {detection_rate*100:.2f}%")
+    
+    return total_time, comparison_time, detection_rate, error_count
+
+def main():
+    total_duration = 0
+    total_compare_time = 0
+    total_detection_rate = 0
+    total_error_detected = 0
+
+    print(f"Starting comparison test, will repeat {REPEAT_TIMES} times, error injection count: {ERROR_INJECTION_COUNT}")
+    
+    for i in range(REPEAT_TIMES):
+        print(f"\nRun {i+1}...")
+        duration, compare_time, detection_rate, error_count = run_comparison()
+        
+        if duration is None:
+            continue
+            
+        total_duration += duration
+        total_compare_time += compare_time
+        total_detection_rate += detection_rate
+        total_error_detected += error_count
+        
+    if REPEAT_TIMES > 0:
+        avg_duration = total_duration / REPEAT_TIMES
+        avg_compare_time = total_compare_time / REPEAT_TIMES
+        avg_detection_rate = total_detection_rate / REPEAT_TIMES * 100
+        avg_error_detected = total_error_detected / REPEAT_TIMES
+        
+        print("\nFinal average results:")
+        print(f"Average total time: {avg_duration:.4f} seconds")
+        print(f"Average compare time: {avg_compare_time:.4f} seconds")
+        print(f"Average detected errors: {avg_error_detected:.2f}")
+        print(f"Average detection rate: {avg_detection_rate:.2f}%")
+
+
 
 
 # 单线程 改良版
@@ -102,30 +146,36 @@ def main():
 #     print("Building tree from log1......")
 #     tree2 = build_tree("log1_with_sdc_33021.csv")
 
-'''多线程'''
+'''多线程 改良版'''
 # class TreeBuilder:
 #     def __init__(self, log_file):
 #         self.log_file=log_file
 #         self.tree = None
 #         self.error = None
+#         self.bepsilon_time = 0
+#         self.hash_tree_time = 0 
 
 #     def build(self):
 #         try:
+#             start_bepsilon = time.time()
 #             b_epsilon_tree = build_bepsilon_tree(self.log_file)
+#             self.bepsilon_time = time.time() - start_bepsilon
+
+#             start_hash_tree = time.time()
 #             hash_tree = LayeredHashTree()
 #             hash_tree.build_from_b_epsilon_tree(b_epsilon_tree)
+#             self.hash_tree_time = time.time() - start_hash_tree
+
 #             self.tree = hash_tree
 #         except Exception as e:
 #             self.error = e
     
-# def main():
+# def run_comparison():
 #     results = []
-#     start_time = time.time()
-#     builder1 = TreeBuilder("log1_with_sdc_33021.csv")
-#     builder2 = TreeBuilder("log2_33021.csv")
+#     builder1 = TreeBuilder("log_01a.csv")
+#     builder2 = TreeBuilder("log_01b.csv")
     
 #     # 创建并启动线程
-#     print("Start...")
 #     thread1 = threading.Thread(target=builder1.build)
 #     thread2 = threading.Thread(target=builder2.build)
     
@@ -137,10 +187,9 @@ def main():
     
 #     results.extend([builder1, builder2])
     
-#     # 检查构建结果
 #     if len(results) != 2:
-#         print("Error: Failed to  build two trees!")
-#         exit(1)
+#         print("Error: Failed to build two trees!")
+#         return None, None, None, None, None, None
     
 #     if results[0].error or results[1].error:
 #         print("An error occurred during the build process!")
@@ -148,17 +197,83 @@ def main():
 #             print(f"NodeA Error: {results[0].error}")
 #         if results[1].error:
 #             print(f"NodeB Error: {results[1].error}")
-#         exit(1)
+#         return None, None, None, None, None, None
 
+#     max_bepsilon_time = max(results[0].bepsilon_time, results[1].bepsilon_time)
+#     max_hash_tree_time = max(results[0].hash_tree_time, results[1].hash_tree_time)
+    
+#     start_compare = time.time()
+    
 #     tree1 = results[0].tree
 #     tree2 = results[1].tree
     
 #     # 比较两棵树
 #     print("\nBegin to compare...")
-#     
-#     compare_trees_bfs(tree1, tree2)
-    # end_time = time.time()
-    # duration = end_time - start_time
-    # print(f"Total time : {duration:.4f} seconds")
+#     differences = compare_trees_bfs(tree1, tree2)
+#     compare_time = time.time() - start_compare
+    
+#     # 计算总时间（不包括树构建）
+#     # total_time_without_build = compare_time
+#     # 计算总时间（包括树构建）
+#     total_time =  max_hash_tree_time + compare_time
+    
+#     # 计算错误检出率
+#     error_count = len(differences) if differences else 0
+#     detection_rate = min(error_count / ERROR_INJECTION_COUNT, 1.0)
+    
+#     print("\nTime breakdown:")
+#     # print(f"B-epsilon tree construction: {max_bepsilon_time:.4f} seconds")
+#     # print(f"Hash tree construction: {max_hash_tree_time:.4f} seconds")
+#     print(f"Tree comparison: {compare_time:.4f} seconds")
+#     # print(f"Total time (without tree build): {total_time_without_build:.4f} seconds")
+#     print(f"Total time (with tree build): {total_time:.4f} seconds")
+#     print(f"Detected errors: {error_count}, Detection rate: {detection_rate*100:.2f}%")
+    
+#     return (total_time, compare_time, 
+#             detection_rate, error_count)
+
+# def main():
+#     total_duration = 0
+#     total_compare_time = 0
+#     total_detection_rate = 0
+#     total_error_detected = 0
+#     # total_bepsilon_time = 0
+#     # total_hash_tree_time = 0
+
+#     print(f"Starting comparison test, will repeat {REPEAT_TIMES} times, error injection count: {ERROR_INJECTION_COUNT}")
+    
+#     for i in range(REPEAT_TIMES):
+#         print(f"\nRun {i+1}...")
+#         result = run_comparison()
+        
+#         if result is None:
+#             continue
+            
+#         (duration, compare_time, detection_rate, error_count) = result
+        
+#         total_duration += duration
+#         total_compare_time += compare_time
+#         total_detection_rate += detection_rate
+#         total_error_detected += error_count
+#         # total_bepsilon_time += bepsilon_time
+#         # total_hash_tree_time += hash_tree_time
+        
+#     if REPEAT_TIMES > 0:
+#         avg_duration = total_duration / REPEAT_TIMES
+#         avg_compare_time = total_compare_time / REPEAT_TIMES
+#         avg_detection_rate = total_detection_rate / REPEAT_TIMES * 100
+#         avg_error_detected = total_error_detected / REPEAT_TIMES
+#         # avg_bepsilon_time = total_bepsilon_time / REPEAT_TIMES
+#         # avg_hash_tree_time = total_hash_tree_time / REPEAT_TIMES
+        
+#         print("\nFinal average results:")
+#         # print(f"Average B-epsilon construction time: {avg_bepsilon_time:.4f} seconds")
+#         # print(f"Average hash tree construction time: {avg_hash_tree_time:.4f} seconds")
+#         print(f"Average comparison time: {avg_compare_time:.4f} seconds")
+#         print(f"Average total time (without tree build): {avg_duration:.4f} seconds")
+#         print(f"Average detected errors: {avg_error_detected:.2f}")
+#         print(f"Average detection rate: {avg_detection_rate:.2f}%")
+
+
 if __name__ == "__main__":
     main()

@@ -73,7 +73,7 @@ class PrefixTree:
             new_path.append(key)
             self.collect_data_for_csv(child, new_path, level + 1, rows)
 
-def generate_incremental_snapshot_from_bplus_tree(bplus_tree):
+def generate_incremental_snapshot_from_bepsilon_tree(bplus_tree):
 
     print("start to generate incremental snapshot...")
     prefix_tree = PrefixTree()

@@ -86,21 +86,21 @@ def compare_partition_hashes(tree1,tree2):
     hash_dict2 = {(table_id, partition_id): hash_value for table_id, partition_id, hash_value in hashes2}
 
     differences = {
-        'only_in_tree1':[],
-        'only_in_tree2':[],
+        # 'only_in_tree1':[],
+        # 'only_in_tree2':[],
         'different_hash':[]
     }
 
     for (table_id, partition_id), hash1 in hash_dict1.items():
-        if (table_id, partition_id) not in hash_dict2:
-            differences['only_in_tree1'].append((table_id, partition_id, hash1))
-        elif hash1 != hash_dict2[(table_id, partition_id)]:
+        # if (table_id, partition_id) not in hash_dict2:
+        #     differences['only_in_tree1'].append((table_id, partition_id, hash1))
+        if hash1 != hash_dict2[(table_id, partition_id)]:
             hash2 = hash_dict2[(table_id, partition_id)]
             differences['different_hash'].append((table_id, partition_id, hash1, hash2))
 
-    for (table_id, partition_id), hash2 in hash_dict2.items():
-        if (table_id, partition_id) not in hash_dict1:
-            differences['only_in_tree2'].append((table_id, partition_id, hash2))
+    # for (table_id, partition_id), hash2 in hash_dict2.items():
+    #     if (table_id, partition_id) not in hash_dict1:
+    #         differences['only_in_tree2'].append((table_id, partition_id, hash2))
 
     print(f"\ndifferent hashes count: {len(differences['different_hash'])}")
     if differences['different_hash']:
@@ -108,9 +108,10 @@ def compare_partition_hashes(tree1,tree2):
         for table_id, partition_id, hash1, hash2 in differences['different_hash']:
             print(f"  table{table_id}/partition{partition_id}:")
             print(f"    tree1 hash: {hash1}")
-            print(f"    tree2 hahs: {hash2}")
+            print(f"    tree2 hash: {hash2}")
 
-    total_differences = len(differences['only_in_tree1']) + len(differences['only_in_tree2']) + len(differences['different_hash'])
+    # total_differences = len(differences['only_in_tree1']) + len(differences['only_in_tree2']) + len(differences['different_hash'])
+    total_differences = len(differences['different_hash'])
     if total_differences == 0:
         print("\n结论: Two tree hashes are completely the same.")
     else:

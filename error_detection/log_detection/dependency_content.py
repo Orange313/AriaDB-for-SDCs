@@ -1,7 +1,10 @@
 import threading
 from collections import defaultdict
 from queue import Queue
+import time
 
+ERROR_INJECTION_COUNT = 7
+REPEAT_TIMES = 5           # 重复执行次数
 def parse_log_file(filename, result_queue):
     # 解析日志文件
     try:
@@ -216,108 +219,188 @@ def compare_log_content(entries1, entries2):
 
     return True, "The log content is completely the same.", []
 
-def main():
-    file1 = "log_01a.csv"
-    file2 = "log_01b.csv"
+# def main():
+#     file1 = "log_01a.csv"
+#     file2 = "log_01b.csv"
 
+#     result_queue = Queue()
+
+#     thread1 = threading.Thread(target=parse_log_file, args=(file1, result_queue))
+#     thread2 = threading.Thread(target=parse_log_file, args=(file2, result_queue))
+
+#     thread1.start()
+#     thread2.start()
+
+#     thread1.join()
+#     thread2.join()
+
+#     # 收集结果
+#     results = []
+#     while not result_queue.empty():
+#         results.append(result_queue.get())
+
+#     # 检查是否有错误
+#     errors = [r for r in results if r['error']]
+#     if errors:
+#         for error in errors:
+#             print(f"Error processing {error['filename']}: {error['error']}")
+#         return
+
+#     # 提取解析结果
+#     file1_data = next(r for r in results if r['filename'] == file1)
+#     file2_data = next(r for r in results if r['filename'] == file2)
+
+#     txns1 = file1_data['transactions']
+#     blocks1 = file1_data['blocks']
+#     entries1 = file1_data['entries']
+#     graph1 = file1_data['graph']
+
+#     txns2 = file2_data['transactions']
+#     blocks2 = file2_data['blocks']
+#     entries2 = file2_data['entries']
+#     graph2 = file2_data['graph']
+
+#     # 比较日志内容
+#     print(f"\nComparing log content:")
+#     is_same_content, reason_content, details_content = compare_log_content(entries1, entries2)
+#     if not is_same_content:
+#         print(f"{reason_content}")
+#         if details_content:
+#             print("Details of the discrepancies in the log content")
+#             for diff in details_content:
+#                 print(f"    log1: {diff['file1']['raw']}")
+#                 print(f"    log2: {diff['file2']['raw']}")
+#     else:
+#         print(f"{reason_content}")
+
+#     # 比较依赖关系
+#     print(f"\nComparing log dependency:")
+#     is_same_deps, reason_deps = compare_block_dependency_graphs(graph1, blocks1, graph2, blocks2)
+#     if not is_same_deps:
+#         print(f"{reason_deps}")
+        
+#         # 找出不同的依赖关系 (按事务ID分组)
+#         txn_ids1 = set(block['TxnID'] for block in blocks1)
+#         txn_ids2 = set(block['TxnID'] for block in blocks2)
+#         all_txn_ids = txn_ids1 | txn_ids2
+        
+#         print("Dependency Differences by Transaction ID:")
+#         for txn_id in sorted(all_txn_ids):
+#             # 获取该事务ID的所有块
+#             blocks_in_txn1 = [b for b in blocks1 if b['TxnID'] == txn_id]
+#             blocks_in_txn2 = [b for b in blocks2 if b['TxnID'] == txn_id]
+            
+#             if len(blocks_in_txn1) != len(blocks_in_txn2):
+#                 print(f"TxnID {txn_id}: log1 block counts:{len(blocks_in_txn1)}, log2 block counts:{len(blocks_in_txn2)}")
+#                 continue
+            
+#             # 比较每个块的依赖
+#             for i in range(min(len(blocks_in_txn1), len(blocks_in_txn2))):
+#                 block1 = blocks_in_txn1[i]
+#                 block2 = blocks_in_txn2[i]
+                
+#                 block_id1 = block1['BlockID']
+#                 block_id2 = block2['BlockID']
+                
+#                 deps1 = {blocks1[dep_id]['TxnID'] for dep_id in graph1.get(block_id1, set())}
+#                 deps2 = {blocks2[dep_id]['TxnID'] for dep_id in graph2.get(block_id2, set())}
+                
+#                 if deps1 != deps2:
+#                     print(f"TxnID {txn_id} block{i+1}:")
+#                     print(f"  log1 dependencies: {sorted(deps1)}")
+#                     print(f"  log2 dependencies: {sorted(deps2)}")
+#     else:
+#         print(f"{reason_deps}")
+
+#     # 对比结果
+#     if is_same_content and is_same_deps:
+#         print("\nLogs are completely the same in content and dependencies.")
+#     else:
+#         print("\nThere is a difference between the two log files:")
+#         if not is_same_content:
+#             print(f"- Log content: {reason_content}")
+#         if not is_same_deps:
+#             print(f"- Transaction dependencies: {reason_deps}")
+
+# if __name__ == "__main__":
+#     main()
+def run_comparison(file1, file2):
+    start_time = time.time()
+    
     result_queue = Queue()
-
     thread1 = threading.Thread(target=parse_log_file, args=(file1, result_queue))
     thread2 = threading.Thread(target=parse_log_file, args=(file2, result_queue))
 
     thread1.start()
     thread2.start()
-
     thread1.join()
     thread2.join()
 
-    # 收集结果
     results = []
     while not result_queue.empty():
         results.append(result_queue.get())
 
-    # 检查是否有错误
     errors = [r for r in results if r['error']]
     if errors:
         for error in errors:
             print(f"Error processing {error['filename']}: {error['error']}")
-        return
+        return None, None, None
 
-    # 提取解析结果
     file1_data = next(r for r in results if r['filename'] == file1)
     file2_data = next(r for r in results if r['filename'] == file2)
 
-    txns1 = file1_data['transactions']
-    blocks1 = file1_data['blocks']
     entries1 = file1_data['entries']
-    graph1 = file1_data['graph']
-
-    txns2 = file2_data['transactions']
-    blocks2 = file2_data['blocks']
     entries2 = file2_data['entries']
+    blocks1 = file1_data['blocks']
+    blocks2 = file2_data['blocks']
+    graph1 = file1_data['graph']
     graph2 = file2_data['graph']
 
-    # 比较日志内容
-    print(f"\nComparing log content:")
-    is_same_content, reason_content, details_content = compare_log_content(entries1, entries2)
-    if not is_same_content:
-        print(f"{reason_content}")
-        if details_content:
-            print("Details of the discrepancies in the log content")
-            for diff in details_content:
-                print(f"    log1: {diff['file1']['raw']}")
-                print(f"    log2: {diff['file2']['raw']}")
-    else:
-        print(f"{reason_content}")
-
     # 比较依赖关系
-    print(f"\nComparing log dependency:")
     is_same_deps, reason_deps = compare_block_dependency_graphs(graph1, blocks1, graph2, blocks2)
-    if not is_same_deps:
-        print(f"{reason_deps}")
-        
-        # 找出不同的依赖关系 (按事务ID分组)
-        txn_ids1 = set(block['TxnID'] for block in blocks1)
-        txn_ids2 = set(block['TxnID'] for block in blocks2)
-        all_txn_ids = txn_ids1 | txn_ids2
-        
-        print("Dependency Differences by Transaction ID:")
-        for txn_id in sorted(all_txn_ids):
-            # 获取该事务ID的所有块
-            blocks_in_txn1 = [b for b in blocks1 if b['TxnID'] == txn_id]
-            blocks_in_txn2 = [b for b in blocks2 if b['TxnID'] == txn_id]
-            
-            if len(blocks_in_txn1) != len(blocks_in_txn2):
-                print(f"TxnID {txn_id}: log1 block counts:{len(blocks_in_txn1)}, log2 block counts:{len(blocks_in_txn2)}")
-                continue
-            
-            # 比较每个块的依赖
-            for i in range(min(len(blocks_in_txn1), len(blocks_in_txn2))):
-                block1 = blocks_in_txn1[i]
-                block2 = blocks_in_txn2[i]
-                
-                block_id1 = block1['BlockID']
-                block_id2 = block2['BlockID']
-                
-                deps1 = {blocks1[dep_id]['TxnID'] for dep_id in graph1.get(block_id1, set())}
-                deps2 = {blocks2[dep_id]['TxnID'] for dep_id in graph2.get(block_id2, set())}
-                
-                if deps1 != deps2:
-                    print(f"TxnID {txn_id} block{i+1}:")
-                    print(f"  log1 dependencies: {sorted(deps1)}")
-                    print(f"  log2 dependencies: {sorted(deps2)}")
-    else:
-        print(f"{reason_deps}")
+    dep_error_count = 0 if is_same_deps else 1  
 
-    # 对比结果
-    if is_same_content and is_same_deps:
-        print("\nLogs are completely the same in content and dependencies.")
-    else:
-        print("\nThere is a difference between the two log files:")
-        if not is_same_content:
-            print(f"- Log content: {reason_content}")
-        if not is_same_deps:
-            print(f"- Transaction dependencies: {reason_deps}")
+    # 比较日志内容
+    is_same_content, reason_content, details_content = compare_log_content(entries1, entries2)
+    content_error_count = 0 if is_same_content else len(details_content)
+
+    total_error_count = content_error_count + dep_error_count
+    detection_rate = min(total_error_count / ERROR_INJECTION_COUNT, 1.0)
+    
+    elapsed_time = time.time() - start_time
+    return elapsed_time, detection_rate, total_error_count
+
+def main():
+    file1 = "log_01a.csv"
+    file2 = "log_01b.csv"
+
+    total_time = 0
+    total_detection_rate = 0
+    total_error_detected = 0
+
+    print(f"开始比对测试，共重复{REPEAT_TIMES}次，每次注入错误数: {ERROR_INJECTION_COUNT}")
+    
+    for i in range(REPEAT_TIMES):
+        print(f"\n第 {i+1} 次执行...")
+        elapsed_time, detection_rate, error_count = run_comparison(file1, file2)
+        
+        if elapsed_time is None:
+            continue
+            
+        total_time += elapsed_time
+        total_detection_rate += detection_rate
+        total_error_detected += error_count
+        
+        print(f"本次结果 - 耗时: {elapsed_time:.4f}秒, 检出错误: {error_count}个, 错误检出率: {detection_rate*100:.2f}%")
+
+    avg_time = total_time / REPEAT_TIMES
+    avg_detection_rate = total_detection_rate / REPEAT_TIMES * 100
+    avg_error_detected = total_error_detected / REPEAT_TIMES
+    
+    print("\n最终平均结果:")
+    print(f"平均比对时间: {avg_time:.4f}秒")
+    print(f"平均检出错误数: {avg_error_detected:.2f}个")
+    print(f"平均错误检出率: {avg_detection_rate:.2f}%")
 
 if __name__ == "__main__":
     main()
