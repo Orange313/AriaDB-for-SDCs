@@ -2,12 +2,10 @@ import threading
 from queue import Queue
 import time
 
-# 配置参数
 ERROR_INJECTION_COUNT = 7
 REPEAT_TIMES = 5       
 
 def parse_log_file(filename, result_queue):
-    """解析日志文件（仅提取原始内容）"""
     try:
         entries = []
         with open(filename, 'r') as f:
@@ -60,7 +58,6 @@ def brute_force_compare(entries1, entries2):
     return diff_count, missing_in_log2
 
 def run_comparison(file1, file2):
-    """执行单次比对"""
     start_time = time.time()
     result_queue = Queue()
     
@@ -113,8 +110,8 @@ def run_comparison(file1, file2):
     return duration, diff_count
 
 def main():
-    file1 = "log_01a.csv"
-    file2 = "log_01b.csv"
+    file1 = 'error_detection\data\original\A\log04a.csv'  
+    file2 = 'error_detection\data\original\B\log04b.csv'
     
     total_time = 0
     total_errors = 0

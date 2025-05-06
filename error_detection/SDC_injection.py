@@ -3,11 +3,11 @@ import pandas as pd
 import random
 import math
 
-input_csv = 'error_detection\data\cut\A\log10s.csv' 
-output_csv = 'error_detection\data\cut\A\log10s_a.csv'
-log_file = 'error_detection/data/sdc_log/log10s_sdc.csv'
+input_csv = 'error_detection\data\different_partition\log01_14.csv' 
+output_csv = 'error_detection\data\different_partition\log01_14a.csv'
+log_file = 'error_detection\data\different_partition\log01_14_sdc.csv'
 sdc_probability = 0.0001  # 万分之一概率
-expected_errors = 3       
+expected_errors = 6       
 
 # 读取 CSV
 df = pd.read_csv(input_csv)

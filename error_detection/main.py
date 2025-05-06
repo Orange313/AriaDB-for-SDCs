@@ -6,7 +6,7 @@ from snapshot_detection.hash_comparator import compare_trees_bfs, compare_partit
 import threading
 import time
 
-ERROR_INJECTION_COUNT = 4
+ERROR_INJECTION_COUNT = 6
 REPEAT_TIMES = 5   
 
 '''单线程 基础版'''
@@ -43,8 +43,8 @@ class TreeBuilder:
 def run_comparison():
     results = []
     
-    builder1 = TreeBuilder("error_detection\data\cut\A\log02s_a.csv")
-    builder2 = TreeBuilder("error_detection\data\cut\B\log02s_b.csv")
+    builder1 = TreeBuilder("error_detection\data\different_partition\log01_16a.csv")
+    builder2 = TreeBuilder("error_detection\data\different_partition\log01_16b.csv")
     
     # 创建并启动线程
     thread1 = threading.Thread(target=builder1.build)
@@ -86,7 +86,7 @@ def run_comparison():
     comparison_time = end_time - start_time_compare
     
     # 计算错误检出率
-    error_count = len(total_differences) if total_differences else 0
+    error_count = total_differences if total_differences else 0
     detection_rate = min(error_count / ERROR_INJECTION_COUNT, 1.0)
     
     print(f"Total time: {total_time:.4f} seconds, Compare time: {comparison_time:.4f} seconds")
@@ -172,8 +172,8 @@ def main():
     
 # def run_comparison():
 #     results = []
-#     builder1 = TreeBuilder("error_detection\data\cut\A\log02s_a.csv")
-#     builder2 = TreeBuilder("error_detection\data\cut\B\log02s_b.csv")
+#     builder1 = TreeBuilder("error_detection\data\different_partition\log01_14a.csv")
+#     builder2 = TreeBuilder("error_detection\data\different_partition\log01_14b.csv")
     
 #     # 创建并启动线程
 #     thread1 = threading.Thread(target=builder1.build)

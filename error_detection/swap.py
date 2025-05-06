@@ -94,8 +94,8 @@ def write_log(blocks, output_file):
         writer.writerows(entries)
 
 def main():
-    input_file = "error_detection\data\cut\A\log10s.csv"
-    output_file = "error_detection\data\cut\B\log10s_b.csv"
+    input_file = "error_detection\data\different_partition\log01_14.csv"
+    output_file = "error_detection\data\different_partition\log01_14b.csv"
     
     random.seed(42)
     

@@ -3,7 +3,7 @@ from collections import defaultdict
 from queue import Queue
 import time
 
-ERROR_INJECTION_COUNT = 5
+ERROR_INJECTION_COUNT = 6
 REPEAT_TIMES = 5           # 重复执行次数
 def parse_log_file(filename, result_queue):
     # 解析日志文件
@@ -375,8 +375,8 @@ def run_comparison(file1, file2):
     return elapsed_time, detection_rate, total_error_count
 
 def main():
-    file1 = "error_detection\data\original\A\log02a.csv"
-    file2 = "error_detection\data\original\B\log02b.csv"
+    file1 = "error_detection\data\original\A\log10a.csv"
+    file2 = "error_detection\data\original\B\log10b.csv"
 
     total_time = 0
     total_detection_rate = 0

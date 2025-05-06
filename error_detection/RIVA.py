@@ -5,7 +5,7 @@ import threading
 from queue import Queue
 
 
-ERROR_INJECTION_COUNT = 7
+ERROR_INJECTION_COUNT = 5
 REPEAT_TIMES = 5         
 
 def sort_log_file(input_file, output_file):
@@ -69,8 +69,8 @@ def verify_files_integrity(file1, file2):
     return is_consistent, duration
 
 if __name__ == "__main__":
-    file1_path = 'log_01a.csv'  
-    file2_path = 'log_01b.csv'
+    file1_path = 'error_detection\data\original\A\log09a.csv'  
+    file2_path = 'error_detection\data\original\B\log09b.csv'
     
     total_time = 0
     error_count = 0

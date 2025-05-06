@@ -15,7 +15,7 @@ def compare_trees_bfs(tree1, tree2):
     # 比较根节点
     if hashes1['root_hash'] == hashes2['root_hash']:
         print("The root node hash is the same!")
-        return differences
+        return differences, differences['partitions']
     
     print("Differences between the two trees...")
     
@@ -117,4 +117,4 @@ def compare_partition_hashes(tree1,tree2):
     else:
         print(f"\n结论: Different partition counts:{total_differences}")
     
-    return differences
+    return total_differences
