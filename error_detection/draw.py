@@ -1,3 +1,5 @@
+# 分区数量对错误检测效果的影响
+# 本文两种增量快照方法比较
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import PercentFormatter
@@ -7,59 +9,73 @@ plt.style.use('seaborn-v0_8-whitegrid')
 plt.rcParams['font.sans-serif'] = ['Microsoft YaHei']
 plt.rcParams['axes.unicode_minus'] = False
 
-# 实验数据准备
-groups = np.arange(1, 6)  # 5组实验
-compare_times = [2.1058, 2.1957, 2.0867, 1.9816, 2.2382]  # 比对时间(秒)
-detected_errors = [3, 5, 9, 12, 15]  # 检出错误数
-detection_rates = [100, 100, 100, 100, 100]  # 错误检出率(%)
+# 数据准备
+groups = np.arange(2, 18, 2)  # 横坐标: 2,4,6,8,10,12,14,16
 
-# 创建画布和主坐标轴
-fig, ax1 = plt.subplots(figsize=(10, 6), dpi=120)
-fig.suptitle('日志比对性能实验结果', fontsize=15, fontweight='bold', y=0.98)
+# 基础版数据
+basic_rates = [20.00, 50.00, 50.00, 50.00, 83.33, 66.67, 33.33, 66.67]
+basic_compare_times = [147.6, 196.3, 190.1, 210.8, 229.2, 227.9, 245.8, 303.9]  # ms
 
-# 柱状图：检出错误数（左轴）
-bars = ax1.bar(groups - 0.15, detected_errors, width=0.3,
-              color='#4C78A8', alpha=0.8, label='检出错误数')
-ax1.set_xlabel('实验组别', fontsize=12)
-ax1.set_ylabel('检出错误数 (个)', fontsize=12)
-ax1.set_ylim(0, max(detected_errors)*1.2)
+# 升级版数据
+improved_rates = [20.00, 50.00, 50.00, 50.00, 83.33, 66.67, 33.33, 66.67]
+improved_compare_times = [10.2, 13.9, 17.6, 18.8, 17.7, 17.6, 18.5, 18.2]  # ms
+
+# 创建画布（改为2行1列）
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8), dpi=120)
+plt.subplots_adjust(hspace=0.3)  # 调整子图间距
+
+# ========== 错误检出率对比 ==========
+colors = ['#4C78A8', '#F58518']  # 蓝橙色系
+width = 0.35  # 柱状图宽度
+
+bars1 = ax1.bar(groups - width/2, basic_rates, width, 
+               color=colors[0], alpha=0.8, label='前缀树分区校验')
+bars2 = ax1.bar(groups + width/2, improved_rates, width, 
+               color=colors[1], alpha=0.8, label='分层哈希校验')
+
 ax1.set_xticks(groups)
-
-# 添加柱状图数据标签
-for bar in bars:
-    height = bar.get_height()
-    ax1.text(bar.get_x() + bar.get_width()/2., height,
-             f'{int(height)}', ha='center', va='bottom',
-             fontsize=10, color='black')
-
-# 折线图：比对时间（右轴）
-ax2 = ax1.twinx()
-line, = ax2.plot(groups + 0.15, compare_times, color='#E45756',
-                marker='o', markersize=8, linewidth=2.5,
-                label='比对时间')
-ax2.set_ylabel('比对时间 (秒)', fontsize=12)
-ax2.set_ylim(0, max(compare_times)*1.3)
-
-# 添加折线图数据标签
-for x, y in zip(groups + 0.15, compare_times):
-    ax2.text(x, y + 0.05, f'{y:.3f}s', ha='center', va='bottom',
-            fontsize=10, color='#E45756')
-
-# 错误检出率标注（顶部）
-for i, rate in enumerate(detection_rates):
-    ax1.text(groups[i], max(detected_errors)*1.1, f'{rate}%',
-            ha='center', va='bottom', fontsize=11,
-            color='#59A14F', weight='bold')
-
-# 合并图例
-lines = [bars, line]
-labels = [l.get_label() for l in lines]
-ax1.legend(lines, labels, loc='upper left', frameon=True)
-
-# 网格线设置
+ax1.set_ylabel('错误检出率 (%)', fontsize=12)
+ax1.set_ylim(0, 100)
+ax1.yaxis.set_major_formatter(PercentFormatter(100))
 ax1.grid(axis='y', linestyle=':', alpha=0.6)
-ax2.grid(False)  # 避免右轴网格线重叠
 
+# 添加数据标签
+for bars in [bars1, bars2]:
+    for bar in bars:
+        height = bar.get_height()
+        ax1.text(bar.get_x() + bar.get_width()/2., height+2,
+                 f'{height:.0f}%', ha='center', va='bottom', 
+                 fontsize=9)
+
+# ========== 比对时间对比 ==========
+line1, = ax2.plot(groups, basic_compare_times, color=colors[0],
+                 marker='o', markersize=8, linewidth=2.5, label='前缀树分区校验')
+line2, = ax2.plot(groups, improved_compare_times, color=colors[1],
+                 marker='s', markersize=8, linewidth=2.5, label='分层哈希校验')
+
+ax2.set_xticks(groups)
+ax2.set_xlabel('分区数量', fontsize=12)
+ax2.set_ylabel('比对时间 (ms)', fontsize=12)
+ax2.set_ylim(0, 350)
+ax2.grid(axis='y', linestyle=':', alpha=0.6)
+
+# 添加数据标签
+for x, y1, y2 in zip(groups, basic_compare_times, improved_compare_times):
+    ax2.text(x, y1+10, f'{y1:.1f}', ha='center', va='bottom', 
+            fontsize=9, color=colors[0])
+    ax2.text(x, y2+10, f'{y2:.1f}', ha='center', va='bottom', 
+            fontsize=9, color=colors[1])
+
+# 统一图例位置
+ax1.legend(loc='upper right', frameon=True, fontsize=10)
+ax2.legend(loc='upper right', frameon=True, fontsize=10)
+
+# 优化布局
 plt.tight_layout()
-plt.savefig('log_comparison_performance.png', dpi=300, bbox_inches='tight')
+
+# 保存图像
+plt.savefig('method_comparison_core_metrics.png', 
+           dpi=300, 
+           bbox_inches='tight', 
+           transparent=True)
 plt.show()
