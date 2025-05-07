@@ -168,15 +168,14 @@ def compare_transaction_blocks(blocks1, blocks2):
             for j, (entry1, entry2) in enumerate(zip(block1['Entries'], block2['Entries'])):
                 if entry1['raw'] != entry2['raw']:
                     diff_count += 1
-                    if diff_count <= 10:
-                        diff_details.append({
-                            "type": "entry_content",
-                            "txn_id": txn_id,
-                            "block_index": i,
-                            "entry_index": j,
-                            "file1_entry": entry1,
-                            "file2_entry": entry2
-                        })
+                    diff_details.append({
+                        "type": "entry_content",
+                        "txn_id": txn_id,
+                        "block_index": i,
+                        "entry_index": j,
+                        "file1_entry": entry1,
+                        "file2_entry": entry2
+                    })
 
     if diff_count > 0:
         return False, f"The number of differences is {diff_count}", diff_details

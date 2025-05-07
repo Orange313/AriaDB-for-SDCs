@@ -3,7 +3,7 @@ from collections import defaultdict
 from queue import Queue
 import time
 
-ERROR_INJECTION_COUNT = 6
+ERROR_INJECTION_COUNT = 18
 REPEAT_TIMES = 5           # 重复执行次数
 def parse_log_file(filename, result_queue):
     # 解析日志文件
@@ -207,12 +207,12 @@ def compare_log_content(entries1, entries2):
     for i, (e1, e2) in enumerate(zip(sorted_entries1, sorted_entries2)):
         if e1['raw'] != e2['raw']:
             diff_count += 1
-            if diff_count <= 10:  
-                diff_details.append({
-                    "index": i,
-                    "file1": e1,
-                    "file2": e2
-                })
+           
+            diff_details.append({
+                "index": i,
+                "file1": e1,
+                "file2": e2
+            })
 
     if diff_count > 0:
         return False, f"The number of differences is {diff_count}", diff_details
@@ -375,8 +375,8 @@ def run_comparison(file1, file2):
     return elapsed_time, detection_rate, total_error_count
 
 def main():
-    file1 = "error_detection\data\original\A\log10a.csv"
-    file2 = "error_detection\data\original\B\log10b.csv"
+    file1 = "error_detection\data\different_sdc_possibility\log02_3333.csv"
+    file2 = "error_detection\data\different_sdc_possibility\log02b.csv"
 
     total_time = 0
     total_detection_rate = 0
