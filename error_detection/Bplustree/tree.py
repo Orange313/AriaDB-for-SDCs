@@ -96,7 +96,7 @@ class BEpsilonTree:
     #统计一些树的信息
     def get_stats(self):
         leaf_count = 0
-        leaf = self.find_leftmost_leaf()
+        leaf = self.find_leftmost_leaf() 
         while leaf:
             leaf_count += 1
             leaf = leaf.next_leaf

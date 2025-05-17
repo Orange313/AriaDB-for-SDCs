@@ -52,8 +52,8 @@ def brute_force_compare(entries1, entries2):
                 
         if not found:
             diff_count += 1
-            if diff_count <= 10:  # 最多记录10个差异
-                missing_in_log2.append((i, entry1))
+            # if diff_count <= 10:  # 最多记录10个差异
+            #     missing_in_log2.append((i, entry1))
     
     return diff_count, missing_in_log2
 
